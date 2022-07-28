@@ -5,7 +5,7 @@ from config import Config
 from utils import clear_str_md2
 
 
-def start(update: Update, context: CallbackContext):
+def start(update: Update, context: CallbackContext) -> None:
     message = update.message
     user = message.from_user
 

@@ -8,7 +8,7 @@ from telegram.ext import CallbackContext
 from config import Config
 
 
-def error_handler(update: Update, context: CallbackContext):
+def error_handler(update: Update, context: CallbackContext) -> None:
     Config.LOGGER.error(msg="Exception while handling an update:", exc_info=context.error)
 
     tb_list = traceback.format_exception(None, context.error, context.error.__traceback__)
