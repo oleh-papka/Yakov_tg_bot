@@ -25,7 +25,11 @@ class Config:
     SPACING = '⠀⠀  '
 
     BOT_COMMANDS = [
+        ('crypto', 'Трішки про крипту'),
+        ('help', 'Підказка')
     ]
+
+    CRYPTO_COIN_IDS = [1, 1027, 1839, 5426]
 
     logging_lvl = logging.DEBUG if DEBUG_FLAG else logging.INFO
 

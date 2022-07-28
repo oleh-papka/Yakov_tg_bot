@@ -11,9 +11,9 @@ def _compose_help_message() -> str:
     for command, description in Config.BOT_COMMANDS:
         msg += f'/{command} - {description}\n'
 
-    msg += f"Бот створений [цим](tg://user?id={Config.CREATOR_ID}) розробником\n" \
-           f"За допомогою [python-telegram-bot](https://python-telegram-bot.org/)\n" \
-           f"Код проекту на github [Yakov_tg_bot]()" \
+    msg += f"\nБот створений [цим](tg://user?id={Config.CREATOR_ID}) розробником,\n" \
+           f"за допомогою [python-telegram-bot](https://python-telegram-bot.org/).\n" \
+           f"Код проекту на GitHub [Yakov_tg_bot](https://github.com/OlegPapka2/Yakov_tg_bot)\n\n" \
            f"Поточна версія бота: {Config.BOT_VERSION}"
 
     return msg

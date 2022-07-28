@@ -1,6 +1,6 @@
 from telegram.ext import Updater
 
-from commands import start_command_handler
+from commands import start_command_handler, help_command_handler, crypto_command_handler
 from config import Config
 from handlers import error_handler
 
@@ -11,6 +11,8 @@ def main():
     disp = updater.dispatcher
 
     disp.add_handler(start_command_handler)
+    disp.add_handler(help_command_handler)
+    disp.add_handler(crypto_command_handler)
 
     disp.add_error_handler(error_handler)
 
