@@ -3,7 +3,7 @@ from datetime import datetime
 import pytz
 
 
-def get_user_time(timezone='Europe/Kiev') -> dict:
+def get_user_time(timezone: str = 'Europe/Kiev') -> dict:
     user_timezone = pytz.timezone(timezone)
 
     user_timestamp = datetime.now(user_timezone)

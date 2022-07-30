@@ -1,11 +1,16 @@
 from telegram.ext import Updater
 
-from commands import start_command_handler, help_command_handler, crypto_command_handler
+from commands import (
+    start_command_handler,
+    help_command_handler,
+    crypto_command_handler,
+    weather_command_handler
+)
 from config import Config
 from handlers import error_handler
 
 
-def main():
+def main() -> None:
     updater = Updater(Config.BOT_TOKEN, use_context=True)
     bot = updater.bot
     disp = updater.dispatcher
@@ -13,6 +18,7 @@ def main():
     disp.add_handler(start_command_handler)
     disp.add_handler(help_command_handler)
     disp.add_handler(crypto_command_handler)
+    disp.add_handler(weather_command_handler)
 
     disp.add_error_handler(error_handler)
 

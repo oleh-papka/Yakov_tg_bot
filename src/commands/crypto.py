@@ -6,7 +6,7 @@ from config import Config
 from utils import clear_str_md2, get_user_time
 
 
-def get_crypto_data(positions=15) -> tuple | None:
+def get_crypto_data(positions: int = 15) -> tuple | None:
     params_usd = {'start': '1', 'limit': str(positions), 'convert': 'USD'}
     params_uah = {'start': '1', 'limit': str(positions), 'convert': 'UAH'}
 
@@ -24,7 +24,7 @@ def get_crypto_data(positions=15) -> tuple | None:
         return None
 
 
-def compose_crypto_msg(usd, uah, positions, user_id):
+def compose_crypto_msg(usd, uah, positions: int) -> str:
     time = get_user_time()['time']
     msg = f'CoinMarketCup дані на (*{time}*):\n\n'
 
@@ -64,9 +64,8 @@ def compose_crypto_msg(usd, uah, positions, user_id):
     return clear_str_md2(msg, ['*', '_'])
 
 
-def crypto_command(update: Update, context: CallbackContext):
+def crypto_command(update: Update, context: CallbackContext) -> None:
     message = update.message
-    user = message.from_user
 
     message.reply_chat_action(ChatAction.TYPING)
     crypto_data = get_crypto_data()
@@ -75,7 +74,7 @@ def crypto_command(update: Update, context: CallbackContext):
         message.reply_text(msg)
         return
     else:
-        message.reply_text(compose_crypto_msg(*crypto_data, user_id=user.id), parse_mode=ParseMode.MARKDOWN_V2)
+        message.reply_text(compose_crypto_msg(*crypto_data), parse_mode=ParseMode.MARKDOWN_V2)
 
 
 crypto_command_handler = CommandHandler('crypto', crypto_command)

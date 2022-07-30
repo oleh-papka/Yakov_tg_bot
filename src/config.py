@@ -26,6 +26,7 @@ class Config:
 
     BOT_COMMANDS = [
         ('crypto', 'Трішки про крипту'),
+        ('weather', 'Погода у Тернополі'),
         ('help', 'Підказка')
     ]
 
