@@ -1,6 +1,15 @@
 from telegram.ext import Updater
 
-from commands import start_command_handler, help_command_handler, crypto_command_handler
+from commands import (
+    start_command_handler,
+    help_command_handler,
+    crypto_command_handler,
+    currency_command_handler,
+    ru_losses_handler,
+    tip_developer_handler,
+    precheckout_handler,
+    successful_payment_handler
+)
 from config import Config
 from handlers import error_handler
 
@@ -13,7 +22,12 @@ def main():
     disp.add_handler(start_command_handler)
     disp.add_handler(help_command_handler)
     disp.add_handler(crypto_command_handler)
-
+    disp.add_handler(currency_command_handler)
+    disp.add_handler(ru_losses_handler)
+    disp.add_handler(tip_developer_handler)
+    disp.add_handler(precheckout_handler)
+    disp.add_handler(successful_payment_handler)
+    # Error handler
     disp.add_error_handler(error_handler)
 
     bot.set_my_commands(Config.BOT_COMMANDS)

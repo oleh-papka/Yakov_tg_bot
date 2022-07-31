@@ -26,7 +26,10 @@ class Config:
 
     BOT_COMMANDS = [
         ('crypto', 'Трішки про крипту'),
-        ('help', 'Підказка')
+        ('currency', 'Дані по валюті'),
+        ('ruloss', 'Втрати кацапні'),
+        ('help', 'Підказка'),
+        ('tip_developer', 'Тестові донейти'),
     ]
 
     CRYPTO_COIN_IDS = [1, 1027, 1839, 5426]
