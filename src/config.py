@@ -13,7 +13,7 @@ class Config:
 
     # If hosting on Heroku
     BOT_LINK = load_env_variable('BOT_LINK', raise_if_none=WEBHOOK_FLAG)
-    BOT_PORT = load_env_variable('BOT_PORT', int, raise_if_none=WEBHOOK_FLAG)
+    BOT_PORT = load_env_variable('PORT', int, raise_if_none=WEBHOOK_FLAG)
 
     CREATOR_ID = 514328460  # Please don't remove leave credit to author
     OWNER_ID = load_env_variable('OWNER_ID', int)  # Change according to your Telegram id
