@@ -35,13 +35,13 @@ def main() -> None:
     bot.set_my_commands(Config.BOT_COMMANDS)
 
     if Config.WEBHOOK_FLAG:
-        Config.LOGGER.debug(f'Starting bot at {Config.BOT_LINK}')
+        Config.LOGGER.info(f'Starting bot at {Config.BOT_LINK}')
         updater.start_webhook(listen='0.0.0.0',
                               port=Config.BOT_PORT,
                               url_path=Config.BOT_TOKEN,
                               webhook_url=Config.BOT_LINK + Config.BOT_TOKEN)
     else:
-        Config.LOGGER.debug('Starting bot locally')
+        Config.LOGGER.info('Starting bot locally')
         updater.start_polling()
 
     Config.LOGGER.info('Bot successfully started!')
