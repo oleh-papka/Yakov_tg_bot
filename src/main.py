@@ -8,13 +8,14 @@ from commands import (
     ru_losses_handler,
     tip_developer_handler,
     precheckout_handler,
-    successful_payment_handler
+    successful_payment_handler,
+    weather_command_handler
 )
 from config import Config
 from handlers import error_handler
 
 
-def main():
+def main() -> None:
     updater = Updater(Config.BOT_TOKEN, use_context=True)
     bot = updater.bot
     disp = updater.dispatcher
@@ -24,6 +25,7 @@ def main():
     disp.add_handler(crypto_command_handler)
     disp.add_handler(currency_command_handler)
     disp.add_handler(ru_losses_handler)
+    disp.add_handler(weather_command_handler)
     disp.add_handler(tip_developer_handler)
     disp.add_handler(precheckout_handler)
     disp.add_handler(successful_payment_handler)
