@@ -1,13 +1,15 @@
-from telegram import ParseMode, ChatAction, Update
+from telegram import ParseMode, ChatAction, Update, MessageEntity
 from telegram.ext import CommandHandler, CallbackContext
 
 from config import Config
-from utils.message_utils import clear_str_md2
+from crud.user import add_user_to_db
+from utils.message_utils import escape_str_md2, send_chat_action
 
 
 def _compose_help_message() -> str:
     msg = "Я Yakov, персональний асистент, а ось команди, які я знаю:\n\n"
 
+    msg += f'/start - Привітулька від бота'
     for command, description in Config.BOT_COMMANDS:
         msg += f'/{command} - {description}\n'
 
@@ -19,12 +21,13 @@ def _compose_help_message() -> str:
     return msg
 
 
+@add_user_to_db
+@send_chat_action(ChatAction.TYPING)
 def help_command(update: Update, context: CallbackContext) -> None:
     message = update.message
 
-    message.reply_chat_action(ChatAction.TYPING)
     message.reply_text(
-        clear_str_md2(_compose_help_message(), exclude=['[', ']', '(', ')']),
+        escape_str_md2(_compose_help_message(), exclude=MessageEntity.TEXT_LINK),
         parse_mode=ParseMode.MARKDOWN_V2,
         disable_web_page_preview=True)
 

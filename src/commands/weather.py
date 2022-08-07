@@ -6,7 +6,9 @@ from telegram import ChatAction, Update
 from telegram.ext import CommandHandler, CallbackContext
 
 from config import Config
+from crud.user import add_user_to_db
 from utils import get_user_time
+from utils.message_utils import send_chat_action
 
 
 def get_weather_pic(date: str | None = None) -> requests.Response | None:
@@ -203,10 +205,10 @@ def get_weather_tomorrow(lat: float = 49.5559, lon: float = 25.6056) -> str:
     return output
 
 
+@add_user_to_db
+@send_chat_action(ChatAction.TYPING)
 def weather(update: Update, context: CallbackContext) -> None:
     message = update.message
-
-    message.reply_chat_action(ChatAction.TYPING)
     tmp_msg = message.reply_text('Потрібно зачекати, зараз усе буде)')
     message.reply_chat_action(ChatAction.UPLOAD_PHOTO)
 

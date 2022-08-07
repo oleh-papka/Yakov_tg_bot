@@ -13,6 +13,8 @@ class Config:
 
     # If hosting on Heroku
     BOT_LINK = load_env_variable('BOT_LINK', raise_if_none=WEBHOOK_FLAG)
+    # Heroku dynamically allocates application port and sets it to PORT env var,
+    # but to stick with naming in code I use BOT_PORT
     BOT_PORT = load_env_variable('PORT', int, raise_if_none=WEBHOOK_FLAG)
 
     CREATOR_ID = 514328460  # Please don't remove leave credit to author
@@ -21,6 +23,13 @@ class Config:
     CMC_API_TOKEN = load_env_variable('CMC_API_TOKEN')  # CoinMarketCup API
     SCREENSHOT_API_TOKEN = load_env_variable('SCREENSHOT_API_TOKEN')  # Screenshot api
     OWM_API_TOKEN = load_env_variable('OWM_API_TOKEN')  # OpenWeatherMap API
+
+    DB_HOST = load_env_variable('DB_HOST')
+    DB_NAME = load_env_variable('DB_NAME')
+    DB_PASS = load_env_variable('DB_PASS')
+    DB_PORT = load_env_variable('DB_PORT')
+    DB_USER = load_env_variable('DB_USER')
+    DB_URL = f"postgresql://{DB_USER}:{DB_PASS}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 
     SPACING = '⠀⠀  '
 

@@ -3,14 +3,16 @@ from bs4 import BeautifulSoup
 from telegram import ParseMode, ChatAction, Update
 from telegram.ext import CommandHandler, CallbackContext
 
-from utils import clear_str_md2
+from crud.user import add_user_to_db
+from utils import escape_str_md2
+from utils.message_utils import send_chat_action
 
 
+@add_user_to_db
+@send_chat_action(ChatAction.TYPING)
 def rus_losses(update: Update, context: CallbackContext):
     message = update.message
     user = message.from_user
-
-    message.reply_chat_action(ChatAction.TYPING)
 
     url = 'https://index.minfin.com.ua/ua/russian-invading/casualties/'
     response = requests.get(url)
@@ -37,7 +39,7 @@ def rus_losses(update: Update, context: CallbackContext):
             loss = loss.replace('близько ', '±')
         msg += loss.replace('(', '*(').replace(')', ')*') + '\n'
 
-    message.reply_text(clear_str_md2(msg, ['*']), parse_mode=ParseMode.MARKDOWN_V2)
+    message.reply_text(escape_str_md2(msg, ['*']), parse_mode=ParseMode.MARKDOWN_V2)
 
 
 ru_losses_handler = CommandHandler('ruloss', rus_losses)

@@ -1,10 +1,14 @@
-from telegram import LabeledPrice, Update, ParseMode
+from telegram import LabeledPrice, Update, ParseMode, ChatAction, MessageEntity
 from telegram.ext import CommandHandler, PreCheckoutQueryHandler, MessageHandler, Filters, CallbackContext
 
 from config import Config
-from utils import clear_str_md2
+from crud.user import add_user_to_db
+from utils import escape_str_md2
+from utils.message_utils import send_chat_action
 
 
+@add_user_to_db
+@send_chat_action(ChatAction.TYPING)
 def tip_developer(update: Update, context: CallbackContext):
     chat_id = update.message.chat_id
     title = 'Купити смаколиків розробнику'
@@ -39,6 +43,8 @@ def tip_developer(update: Update, context: CallbackContext):
     )
 
 
+@add_user_to_db
+@send_chat_action(ChatAction.TYPING)
 def payment_precheckout(update: Update, context: CallbackContext):
     query = update.pre_checkout_query
 
@@ -48,6 +54,8 @@ def payment_precheckout(update: Update, context: CallbackContext):
         query.answer(ok=True)
 
 
+@add_user_to_db
+@send_chat_action(ChatAction.TYPING)
 def successful_payment(update: Update, context: CallbackContext):
     message = update.message
     payment = message.successful_payment
@@ -58,7 +66,7 @@ def successful_payment(update: Update, context: CallbackContext):
     msg = f'Не повіриш! Добра душа [{user.first_name}](tg://user?id={user.id}) ' \
           f'передала тобі пару гривників \({payment.total_amount / 100:g} {payment.currency}\)!'
 
-    context.bot.send_message(Config.OWNER_ID, clear_str_md2(msg, exclude=['[', ']', '(', ')']),
+    context.bot.send_message(Config.OWNER_ID, escape_str_md2(msg, exclude=MessageEntity.TEXT_LINK),
                              parse_mode=ParseMode.MARKDOWN_V2)
 
 

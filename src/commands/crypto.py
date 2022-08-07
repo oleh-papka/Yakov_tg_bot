@@ -1,9 +1,11 @@
 import requests
-from telegram import Update, ChatAction, ParseMode
+from telegram import Update, ChatAction, ParseMode, MessageEntity
 from telegram.ext import CommandHandler, CallbackContext
 
 from config import Config
-from utils import clear_str_md2, get_user_time
+from crud.user import add_user_to_db
+from utils import escape_str_md2, get_user_time
+from utils.message_utils import send_chat_action
 
 
 def get_crypto_data(positions: int = 15) -> tuple | None:
@@ -61,13 +63,14 @@ def compose_crypto_msg(usd, uah, positions: int) -> str:
         msg += f'{Config.SPACING}{secondary_emoji}*{price_usd:,}$* (_{price_uah:,}₴_):\n'
         msg += f'{Config.SPACING}( {change_1h:0.2f}% *|* {change_24h:0.2f}% *|* {change_7d:0.2f}% )\n\n'
 
-    return clear_str_md2(msg, ['*', '_'])
+    return escape_str_md2(msg, exclude=['*', '_'])
 
 
+@add_user_to_db
+@send_chat_action(ChatAction.TYPING)
 def crypto_command(update: Update, context: CallbackContext) -> None:
     message = update.message
 
-    message.reply_chat_action(ChatAction.TYPING)
     crypto_data = get_crypto_data()
     if crypto_data is None:
         msg = '⚠ Щось пішло не так, немає відповіді від API...'

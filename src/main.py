@@ -9,10 +9,11 @@ from commands import (
     tip_developer_handler,
     precheckout_handler,
     successful_payment_handler,
-    weather_command_handler
+    weather_command_handler,
+    days_passed_handler
 )
 from config import Config
-from handlers import error_handler
+from handlers import error_handler, unknown_handler
 
 
 def main() -> None:
@@ -29,6 +30,13 @@ def main() -> None:
     disp.add_handler(tip_developer_handler)
     disp.add_handler(precheckout_handler)
     disp.add_handler(successful_payment_handler)
+
+    # Text regex handlers
+    disp.add_handler(days_passed_handler)
+
+    # Unknown messages handler
+    disp.add_handler(unknown_handler)
+
     # Error handler
     disp.add_error_handler(error_handler)
 
