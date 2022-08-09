@@ -1,11 +1,12 @@
 import requests
-from telegram import Update, ChatAction, ParseMode, MessageEntity
+from telegram import Update, ChatAction, ParseMode
 from telegram.ext import CommandHandler, CallbackContext
 
 from config import Config
-from crud.user import add_user_to_db
-from utils import escape_str_md2, get_user_time
-from utils.message_utils import send_chat_action
+from crud.user import auto_create_user
+from utils.db_utils import create_session
+from utils.message_utils import escape_str_md2, send_chat_action
+from utils.time_utils import get_user_time
 
 
 def get_crypto_data(positions: int = 15) -> tuple | None:
@@ -66,10 +67,12 @@ def compose_crypto_msg(usd, uah, positions: int) -> str:
     return escape_str_md2(msg, exclude=['*', '_'])
 
 
-@add_user_to_db
+@create_session
 @send_chat_action(ChatAction.TYPING)
-def crypto_command(update: Update, context: CallbackContext) -> None:
+def crypto_command(update: Update, context: CallbackContext, db) -> None:
     message = update.message
+    user = message.from_user
+    auto_create_user(db, user)
 
     crypto_data = get_crypto_data()
     if crypto_data is None:

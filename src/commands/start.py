@@ -2,15 +2,17 @@ from telegram import Update, ParseMode, MessageEntity, ChatAction
 from telegram.ext import CommandHandler, CallbackContext
 
 from config import Config
-from crud.user import add_user_to_db
+from crud.user import auto_create_user
+from utils.db_utils import create_session
 from utils.message_utils import send_chat_action, escape_str_md2
 
 
-@add_user_to_db
+@create_session
 @send_chat_action(ChatAction.TYPING)
-def start(update: Update, context: CallbackContext) -> None:
+def start(update: Update, context: CallbackContext, db) -> None:
     message = update.message
     user = message.from_user
+    auto_create_user(db, user)
 
     msg = f"Привіт {user.first_name}, я Yakov і створений тому, що " \
           f"моєму [розробнику](tg://user?id={Config.CREATOR_ID}) було нудно.\n" \

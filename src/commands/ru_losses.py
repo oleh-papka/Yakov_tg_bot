@@ -3,16 +3,17 @@ from bs4 import BeautifulSoup
 from telegram import ParseMode, ChatAction, Update
 from telegram.ext import CommandHandler, CallbackContext
 
-from crud.user import add_user_to_db
-from utils import escape_str_md2
-from utils.message_utils import send_chat_action
+from crud.user import auto_create_user
+from utils.db_utils import create_session
+from utils.message_utils import send_chat_action, escape_str_md2
 
 
-@add_user_to_db
+@create_session
 @send_chat_action(ChatAction.TYPING)
-def rus_losses(update: Update, context: CallbackContext):
+def rus_losses(update: Update, context: CallbackContext, db):
     message = update.message
     user = message.from_user
+    auto_create_user(db, user)
 
     url = 'https://index.minfin.com.ua/ua/russian-invading/casualties/'
     response = requests.get(url)

@@ -1,18 +1,20 @@
 import requests
 from bs4 import BeautifulSoup
-from telegram import Update, ChatAction, ParseMode, MessageEntity
+from telegram import Update, ChatAction, ParseMode
 from telegram.ext import CallbackContext, CommandHandler
 
 from config import Config
-from crud.user import add_user_to_db
-from utils import escape_str_md2
-from utils.message_utils import send_chat_action
+from crud.user import auto_create_user
+from utils.db_utils import create_session
+from utils.message_utils import send_chat_action, escape_str_md2
 
 
-@add_user_to_db
+@create_session
 @send_chat_action(ChatAction.TYPING)
-def currency(update: Update, context: CallbackContext):
+def currency(update: Update, context: CallbackContext, db):
     message = update.message
+    user = message.from_user
+    auto_create_user(db, user)
 
     currencies_emoji_mapping = {
         'usd': '🇺🇸',

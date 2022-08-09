@@ -1,4 +1,5 @@
 import json
+import urllib.parse
 from datetime import datetime, time, timedelta
 
 import requests
@@ -6,24 +7,44 @@ from telegram import ChatAction, Update
 from telegram.ext import CommandHandler, CallbackContext
 
 from config import Config
-from crud.user import add_user_to_db
-from utils import get_user_time
+from crud.city import get_city_by_user, get_city_by_name
+from crud.user import auto_create_user, get_user
+from utils.db_utils import create_session
 from utils.message_utils import send_chat_action
+from utils.time_utils import get_user_time
 
 
-def get_weather_pic(date: str | None = None) -> requests.Response | None:
+def ping_city_sinoptik(city_name: str) -> str | None:
+    sinoptik_base_url = f'https://ua.sinoptik.ua/погода-{city_name}'
+    response = requests.get(sinoptik_base_url)
+
+    if response.ok:
+        return sinoptik_base_url
+    else:
+        return
+
+
+def validate_sinoptik_city(city_name: str) -> str | None:
+    if city := get_city_by_name(city_name):
+        return city.url
+    else:
+        return ping_city_sinoptik(city_name)
+
+
+def get_weather_pic(city_name: str | None = None, date: str | None = None) -> requests.Response | None:
+    if city_name is None:
+        return None
+
     if date is None:
         date = ''
-    else:
-        date = '/' + date
 
-    query = f'https://shot.screenshotapi.net/screenshot?token={Config.SCREENSHOT_API_TOKEN}&url=https%3A%2F%2Fua' \
-            f'.sinoptik.ua%2F%25D0%25BF%25D0%25BE%25D0%25B3%25D0%25BE%25D0%25B4%25D0%25B0-%25D1%2582%25D0%25B5%25D1' \
-            f'%2580%25D0%25BD%25D0%25BE%25D0%25BF%25D1%2596%25D0%25BB%25D1%258C' \
-            f'{date}&width=1920&height=1080&output=image&file_type=png&block_ads=true&wait_for_event=load&selector' \
-            f'=.tabsContentInner '
+    sinoptik_base_url = f'https://ua.sinoptik.ua/погода-{city_name}/{date}'
+    sinoptik_url = urllib.parse.quote(sinoptik_base_url)
 
-    resp = requests.get(query)
+    url = f'https://shot.screenshotapi.net/screenshot?token={Config.SCREENSHOT_API_TOKEN}&url={sinoptik_url}&width' \
+          f'=1920&height=1080&output=image&file_type=png&block_ads=true&wait_for_event=load&selector=.tabsContentInner'
+
+    resp = requests.get(url)
 
     if resp.ok:
         return resp
@@ -67,7 +88,7 @@ def get_emoji(weather_cond: str, time_unix: time, sunrise_unix: time, sunset_uni
     return emoji, weather_cond
 
 
-def get_weather_details(curr_time: datetime, lat: float = 49.5559, lon: float = 25.6056) -> str:
+def get_weather_text(curr_time: datetime, lat: float = 49.5559, lon: float = 25.6056) -> str:
     url = f'https://api.openweathermap.org/data/2.5/onecall?lat={lat}&lon={lon}&exclude=minutely,' \
           f'alerts&units=metric&appid={Config.OWM_API_TOKEN}'
 
@@ -205,21 +226,31 @@ def get_weather_tomorrow(lat: float = 49.5559, lon: float = 25.6056) -> str:
     return output
 
 
-@add_user_to_db
+@create_session
 @send_chat_action(ChatAction.TYPING)
-def weather(update: Update, context: CallbackContext) -> None:
+def weather(update: Update, context: CallbackContext, db):
     message = update.message
+    user = message.from_user
+    auto_create_user(db, user)
+
     tmp_msg = message.reply_text('Потрібно зачекати, зараз усе буде)')
     message.reply_chat_action(ChatAction.UPLOAD_PHOTO)
 
-    user_time = get_user_time()['timestamp']
+    city = get_city_by_user(db, user.id)
+    user_model = get_user(db, user.id)
+    user_time = get_user_time(user_model.timezone)['timestamp']
+
+    # TODO: add dialog
+    # if not city:
+    #     tmp_msg.delete()
+    #     return message.reply_text('City is not configured!')
 
     if int(user_time.hour) in range(20, 24):
         tomorrow = user_time + timedelta(days=1)
         tomorrow = tomorrow.strftime('%Y-%m-%d')
 
         message.reply_chat_action(ChatAction.UPLOAD_PHOTO)
-        if resp := get_weather_pic(tomorrow):
+        if resp := get_weather_pic(city.name, tomorrow):
             message.reply_photo(resp.content)
         else:
             message.reply_chat_action(ChatAction.TYPING)
@@ -230,7 +261,7 @@ def weather(update: Update, context: CallbackContext) -> None:
             message.reply_photo(resp.content)
         else:
             message.reply_chat_action(ChatAction.TYPING)
-            message.reply_text(get_weather_details(curr_time=user_time))
+            message.reply_text(get_weather_text(curr_time=user_time))
 
     tmp_msg.delete()
 

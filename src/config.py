@@ -1,6 +1,6 @@
 import logging
 
-from utils import load_env_variable
+from utils.env_utils import load_env_variable
 
 
 class Config:
@@ -47,6 +47,6 @@ class Config:
     logging_lvl = logging.DEBUG if DEBUG_FLAG else logging.INFO
 
     logging.basicConfig(
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging_lvl)
+        format='%(asctime)s | %(module)s | %(levelname)s | %(message)s', level=logging_lvl)
 
     LOGGER = logging.getLogger(__name__)

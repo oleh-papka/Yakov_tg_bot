@@ -1,30 +1,21 @@
 import telegram
-from sqlalchemy import select, update
-from telegram import Update
-from telegram.ext import CallbackContext
+from sqlalchemy import update
 
 import models
 from config import Config
-from utils.db_utils import session
 
 
-def user_exists(user_id: int) -> models.User:
-    with session as db:
-        user = db.execute(
-            select(
-                models.User
-            ).where(
-                models.User.id == user_id
-            )
-        ).first()
-
-    if user:
-        user = user[0]
+def get_user(db, user_id: int) -> models.User:
+    user = db.query(
+        models.User
+    ).filter(
+        models.User.id == user_id
+    ).first()
 
     return user
 
 
-def create_user(user: telegram.User):
+def create_user(db, user: telegram.User) -> None:
     user_model = models.User(
         id=user.id,
         username=user.username,
@@ -33,14 +24,30 @@ def create_user(user: telegram.User):
         language_code=user.language_code
     )
 
-    with session as db:
-        db.add(user_model)
-        db.commit()
+    db.add(user_model)
+    db.commit()
 
     Config.LOGGER.info(f'Added new user {user.name} (id:{user.id})')
 
 
-def update_user(user: telegram.User, user_model: models.User):
+def update_user(db, user: telegram.User, user_data: dict) -> None:
+    update_query = update(
+        models.User
+    ).where(
+        models.User.id == user.id
+    ).values(user_data)
+
+    db.execute(update_query)
+    db.commit()
+
+    changes = [f"'{key}'->'{value}'" for key, value in user_data.items()]
+    changes = ' '.join(changes)
+
+    Config.LOGGER.debug(f'Changed: {changes} for user {user.name} (id:{user.id})')
+
+
+def auto_update_user(db, user: telegram.User, user_model: models.User) -> None:
+    """Update user if needed"""
     user_data = {}
 
     if user_model.username != user.username:
@@ -53,33 +60,14 @@ def update_user(user: telegram.User, user_model: models.User):
         user_data['language_code'] = user.language_code
 
     if user_data:
-        update_query = update(
-            models.User
-        ).where(
-            models.User.id == user.id
-        ).values(user_data)
-
-        with session as db:
-            db.execute(update_query)
-            db.commit()
-
-        changes = [f'{key} -> {value}' for key, value in user_data.items()]
-
-        Config.LOGGER.info(f'Changed {changes} for user {user.name} (id:{user.id})')
+        update_user(db, user, user_data)
     else:
         Config.LOGGER.debug(f'Nothing to change for user {user.name} (id:{user.id})')
 
 
-def add_user_to_db(func):
-    def inner_function(update: Update, context: CallbackContext):
-        message = update.message
-        user = message.from_user
-
-        if user_model := user_exists(user.id):
-            update_user(user, user_model)
-        else:
-            create_user(user)
-
-        return func(update, context)
-
-    return inner_function
+def auto_create_user(db, user: telegram.User):
+    """Create new user or update its data if needed"""
+    if user_model := get_user(db, user.id):
+        auto_update_user(db, user, user_model)
+    else:
+        create_user(db, user)

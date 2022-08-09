@@ -35,9 +35,9 @@ def escape_str_md2(msg: str, exclude: str | list | None, *exclude_additional: st
 
 def send_chat_action(action_type: str):
     def send_action(func):
-        def command_func(update: Update, context: CallbackContext):
+        def command_func(update: Update, context: CallbackContext, *args, **kwargs):
             context.bot.send_chat_action(chat_id=update.effective_message.chat_id, action=action_type)
-            return func(update, context)
+            return func(update, context, *args, **kwargs)
 
         return command_func
 

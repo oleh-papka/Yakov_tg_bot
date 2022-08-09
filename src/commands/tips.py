@@ -2,28 +2,27 @@ from telegram import LabeledPrice, Update, ParseMode, ChatAction, MessageEntity
 from telegram.ext import CommandHandler, PreCheckoutQueryHandler, MessageHandler, Filters, CallbackContext
 
 from config import Config
-from crud.user import add_user_to_db
-from utils import escape_str_md2
-from utils.message_utils import send_chat_action
+from crud.user import auto_create_user
+from utils.db_utils import create_session
+from utils.message_utils import send_chat_action, escape_str_md2
 
 
-@add_user_to_db
+@create_session
 @send_chat_action(ChatAction.TYPING)
-def tip_developer(update: Update, context: CallbackContext):
+def tip_developer(update: Update, context: CallbackContext, db):
     chat_id = update.message.chat_id
+    user = update.message.from_user
+    auto_create_user(db, user)
+
     title = 'Купити смаколиків розробнику'
     description = 'Я старався'
     payload = "Custom-Payload"
     provider_token = '632593626:TEST:sandbox_i29859238551'
     currency = "UAH"
-
     price = 50
-
     prices = [LabeledPrice('На щось смачненьке', price * 100)]
     max_tip_amount = 10000
     suggested_tip_amounts = [1000, 5000, 10000]
-
-    user = update.message.from_user
 
     context.bot.send_invoice(
         chat_id,
@@ -43,10 +42,12 @@ def tip_developer(update: Update, context: CallbackContext):
     )
 
 
-@add_user_to_db
+@create_session
 @send_chat_action(ChatAction.TYPING)
-def payment_precheckout(update: Update, context: CallbackContext):
+def payment_precheckout(update: Update, context: CallbackContext, db):
     query = update.pre_checkout_query
+    user = query.from_user
+    auto_create_user(db, user)
 
     if query.invoice_payload != 'Custom-Payload':
         query.answer(ok=False, error_message="Щось пішло не так...")
@@ -54,12 +55,13 @@ def payment_precheckout(update: Update, context: CallbackContext):
         query.answer(ok=True)
 
 
-@add_user_to_db
+@create_session
 @send_chat_action(ChatAction.TYPING)
-def successful_payment(update: Update, context: CallbackContext):
+def successful_payment(update: Update, context: CallbackContext, db):
     message = update.message
     payment = message.successful_payment
     user = message.from_user
+    auto_create_user(db, user)
 
     message.reply_text("✅ Чотенько, дякую за грошенятка!")
 
