@@ -9,10 +9,15 @@ from config import Config
 
 
 def error_handler(update: Update, context: CallbackContext) -> None:
+    ERROR_MSG_LENGTH = 1000 - 4  # Because "...\n" used
+
     Config.LOGGER.error(msg="Exception while handling an update:", exc_info=context.error)
 
     tb_list = traceback.format_exception(None, context.error, context.error.__traceback__)
     tb_string = "".join(tb_list)
+
+    if len(tb_string) > ERROR_MSG_LENGTH:
+        tb_string = "...\n" + tb_string[-ERROR_MSG_LENGTH:].strip()
 
     update_str = update.to_dict() if isinstance(update, Update) else str(update)
     message = (
