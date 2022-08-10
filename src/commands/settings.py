@@ -38,7 +38,6 @@ def settings(update: Update, context: CallbackContext, db):
 
 
 @create_session
-@send_chat_action(ChatAction.TYPING)
 def user_city_check(update: Update, context: CallbackContext, db):
     query = update.callback_query
     user = query.from_user
@@ -129,7 +128,6 @@ def user_city_change(update: Update, context: CallbackContext, db):
 
 
 @create_session
-@send_chat_action(ChatAction.TYPING)
 def change_timezone_to_city(update: Update, context: CallbackContext, db):
     query = update.callback_query
     user = query.from_user
@@ -151,7 +149,6 @@ def change_timezone_to_city(update: Update, context: CallbackContext, db):
 
 
 @create_session
-@send_chat_action(ChatAction.TYPING)
 def user_timezone_check(update: Update, context: CallbackContext, db):
     query = update.callback_query
     user = query.from_user
