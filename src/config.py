@@ -24,12 +24,7 @@ class Config:
     SCREENSHOT_API_TOKEN = load_env_variable('SCREENSHOT_API_TOKEN')  # Screenshot api
     OWM_API_TOKEN = load_env_variable('OWM_API_TOKEN')  # OpenWeatherMap API
 
-    DB_HOST = load_env_variable('DB_HOST')
-    DB_NAME = load_env_variable('DB_NAME')
-    DB_PASS = load_env_variable('DB_PASS')
-    DB_PORT = load_env_variable('DB_PORT')
-    DB_USER = load_env_variable('DB_USER')
-    DB_URL = f"postgresql://{DB_USER}:{DB_PASS}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+    DB_URL = load_env_variable('DB_URL')    # URL to your db
 
     SPACING = '⠀⠀  '
 
