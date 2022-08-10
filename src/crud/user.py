@@ -15,7 +15,7 @@ def get_user(db, user_id: int) -> models.User:
     return user
 
 
-def create_user(db, user: telegram.User) -> None:
+def create_user(db, user: telegram.User) -> models.User:
     user_model = models.User(
         id=user.id,
         username=user.username,
@@ -28,6 +28,7 @@ def create_user(db, user: telegram.User) -> None:
     db.commit()
 
     Config.LOGGER.info(f'Added new user {user.name} (id:{user.id})')
+    return user_model
 
 
 def update_user(db, user: telegram.User, user_data: dict) -> None:
@@ -65,9 +66,10 @@ def auto_update_user(db, user: telegram.User, user_model: models.User) -> None:
         Config.LOGGER.debug(f'Nothing to change for user {user.name} (id:{user.id})')
 
 
-def auto_create_user(db, user: telegram.User):
+def auto_create_user(db, user: telegram.User) -> models.User:
     """Create new user or update its data if needed"""
     if user_model := get_user(db, user.id):
         auto_update_user(db, user, user_model)
     else:
-        create_user(db, user)
+        user_model = create_user(db, user)
+    return user_model

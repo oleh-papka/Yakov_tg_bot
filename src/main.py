@@ -12,6 +12,7 @@ from commands import (
     weather_command_handler,
     days_passed_handler
 )
+from commands.settings import settings_conversation_handler
 from config import Config
 from handlers import error_handler, unknown_handler
 
@@ -30,6 +31,7 @@ def main() -> None:
     disp.add_handler(tip_developer_handler)
     disp.add_handler(precheckout_handler)
     disp.add_handler(successful_payment_handler)
+    disp.add_handler(settings_conversation_handler)
 
     # Text regex handlers
     disp.add_handler(days_passed_handler)

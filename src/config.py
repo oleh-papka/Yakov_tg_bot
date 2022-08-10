@@ -34,11 +34,12 @@ class Config:
     SPACING = '⠀⠀  '
 
     BOT_COMMANDS = [
-        ('weather', 'Погода у Тернополі'),
+        ('weather', 'Погода'),
         ('crypto', 'Трішки про крипту'),
         ('currency', 'Дані по валюті'),
         ('ruloss', 'Втрати кацапні'),
         ('tip_developer', 'Тестові донейти'),
+        ('settings', 'Налаштування'),
         ('help', 'Підказка')
     ]
 

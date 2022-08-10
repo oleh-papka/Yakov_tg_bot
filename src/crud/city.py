@@ -1,42 +1,40 @@
 import telegram
 
 import models
-from config import Config
 
 
-def get_city_by_name(db, city_name: str) -> models.City:
-    city = db.query(
+def get_city_by_name(db, city_name: str) -> models.City | None:
+    city_model = db.query(
         models.City
     ).filter(
         models.City.name == city_name
     ).first()
 
-    return city
+    return city_model
 
 
-def get_city_by_user(db, user_id: int) -> models.City:
-    city = db.query(
-        models.City
-    ).join(
-        models.City.user
+def get_city_by_user(db, user_id: int) -> tuple | None:
+    row = db.query(
+        models.City,
+        models.User
     ).filter(
-        models.User.id == user_id
+        models.User.id == user_id,
+        models.User.city
     ).first()
 
-    return city
+    return row
 
 
-def create_city(db, user: telegram.User, name: str, lat: float, lon: float, url: str) -> None:
+def create_city(db, name: str, lat: float, lon: float, url: str = None, timezone_offset: int = None) -> models.City:
     city_model = models.City(
         name=name,
         lat=lat,
         lon=lon,
-        url=url
+        url=url,
+        timezone_offset=timezone_offset
     )
 
     db.add(city_model)
-    user_model = db.query(models.User).filter(models.User.id == user.id).first()
-    user_model.city.append(city_model)
     db.commit()
 
-    Config.LOGGER.debug(f'Added new city {name} for user {user.name} (id:{user.id})')
+    return city_model

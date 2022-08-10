@@ -16,7 +16,7 @@ class User(Base):
     last_name = Column(VARCHAR(64), nullable=True)
     joined = Column(TIMESTAMP, nullable=False, default=datetime.utcnow)
     language_code = Column(VARCHAR(2), nullable=False)
-    timezone = Column(VARCHAR(30), nullable=True, default='Europe/Kiev')
+    timezone_offset = Column(INTEGER, nullable=True, default=10800)
 
     city = relationship('City', secondary='user_city', overlaps='user')
     currency = relationship('Currency', secondary='currency_watchlist', overlaps='user')

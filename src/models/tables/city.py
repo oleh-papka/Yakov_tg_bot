@@ -10,8 +10,9 @@ class City(Base):
 
     id = Column(INTEGER, primary_key=True, autoincrement=True)
     name = Column(VARCHAR(50), nullable=False)
-    lat = Column(REAL, nullable=False)
-    lon = Column(REAL, nullable=False)
-    url = Column(TEXT, nullable=False)
+    lat = Column(REAL, nullable=True)
+    lon = Column(REAL, nullable=True)
+    url = Column(TEXT, nullable=True)
+    timezone_offset = Column(INTEGER, nullable=True)
 
     user = relationship('User', secondary='user_city')

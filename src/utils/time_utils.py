@@ -1,17 +1,19 @@
-from datetime import datetime
-
-import pytz
+from datetime import datetime, timezone
 
 
-def get_user_time(timezone: str = 'Europe/Kiev') -> dict:
-    user_timezone = pytz.timezone(timezone)
-
-    user_timestamp = datetime.now(user_timezone)
-    user_time = user_timestamp.strftime('%H:%M')
-    user_date = user_timestamp.strftime('%Y-%m-%d')
+def get_time_from_offset(offset: int) -> dict:
+    timestamp = datetime.now(timezone.utc).timestamp() + offset
+    dt = datetime.fromtimestamp(timestamp)
+    time = dt.strftime('%H:%M')
+    date = dt.strftime('%Y-%m-%d')
 
     return {
-        'time': user_time,
-        'date': user_date,
-        'timestamp': user_timestamp
+        'time': time,
+        'date': date,
+        'dt': dt
     }
+
+
+def timezone_offset_repr(timezone_offset: int | str) -> str:
+    timezone_offset = int(timezone_offset/3600)
+    return f'{timezone_offset:+d}'

@@ -6,7 +6,7 @@ from config import Config
 from crud.user import auto_create_user
 from utils.db_utils import create_session
 from utils.message_utils import escape_str_md2, send_chat_action
-from utils.time_utils import get_user_time
+from utils.time_utils import get_time_from_offset
 
 
 def get_crypto_data(positions: int = 15) -> tuple | None:
@@ -28,8 +28,7 @@ def get_crypto_data(positions: int = 15) -> tuple | None:
 
 
 def compose_crypto_msg(usd, uah, positions: int) -> str:
-    time = get_user_time()['time']
-    msg = f'CoinMarketCup дані на (*{time}*):\n\n'
+    msg = ''
 
     for i in range(positions):
         coin_id = usd['data'][i]['id']
@@ -64,7 +63,7 @@ def compose_crypto_msg(usd, uah, positions: int) -> str:
         msg += f'{Config.SPACING}{secondary_emoji}*{price_usd:,}$* (_{price_uah:,}₴_):\n'
         msg += f'{Config.SPACING}( {change_1h:0.2f}% *|* {change_24h:0.2f}% *|* {change_7d:0.2f}% )\n\n'
 
-    return escape_str_md2(msg, exclude=['*', '_'])
+    return msg
 
 
 @create_session
@@ -72,7 +71,7 @@ def compose_crypto_msg(usd, uah, positions: int) -> str:
 def crypto_command(update: Update, context: CallbackContext, db) -> None:
     message = update.message
     user = message.from_user
-    auto_create_user(db, user)
+    user_model = auto_create_user(db, user)
 
     crypto_data = get_crypto_data()
     if crypto_data is None:
@@ -80,7 +79,10 @@ def crypto_command(update: Update, context: CallbackContext, db) -> None:
         message.reply_text(msg)
         return
     else:
-        message.reply_text(compose_crypto_msg(*crypto_data), parse_mode=ParseMode.MARKDOWN_V2)
+        time = get_time_from_offset(user_model.timezone_offset)['time']
+        msg = f'CoinMarketCup дані на (*{time}*):\n\n'
+        msg += compose_crypto_msg(*crypto_data)
+        message.reply_text(escape_str_md2(msg, exclude=['*', '_']), parse_mode=ParseMode.MARKDOWN_V2)
 
 
 crypto_command_handler = CommandHandler('crypto', crypto_command)

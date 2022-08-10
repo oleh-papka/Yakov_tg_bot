@@ -3,42 +3,25 @@ import urllib.parse
 from datetime import datetime, time, timedelta
 
 import requests
-from telegram import ChatAction, Update
+from telegram import ChatAction, Update, ParseMode, MessageEntity
 from telegram.ext import CommandHandler, CallbackContext
 
 from config import Config
-from crud.city import get_city_by_user, get_city_by_name
-from crud.user import auto_create_user, get_user
+from crud.city import get_city_by_user
+from crud.user import auto_create_user
 from utils.db_utils import create_session
-from utils.message_utils import send_chat_action
-from utils.time_utils import get_user_time
+from utils.message_utils import send_chat_action, escape_str_md2
+from utils.time_utils import get_time_from_offset
 
 
-def ping_city_sinoptik(city_name: str) -> str | None:
-    sinoptik_base_url = f'https://ua.sinoptik.ua/погода-{city_name}'
-    response = requests.get(sinoptik_base_url)
-
-    if response.ok:
-        return sinoptik_base_url
-    else:
-        return
-
-
-def validate_sinoptik_city(city_name: str) -> str | None:
-    if city := get_city_by_name(city_name):
-        return city.url
-    else:
-        return ping_city_sinoptik(city_name)
-
-
-def get_weather_pic(city_name: str | None = None, date: str | None = None) -> requests.Response | None:
-    if city_name is None:
+def get_weather_pic(city_url: str | None = None, date: str | None = None) -> requests.Response | None:
+    if city_url is None:
         return None
 
     if date is None:
         date = ''
 
-    sinoptik_base_url = f'https://ua.sinoptik.ua/погода-{city_name}/{date}'
+    sinoptik_base_url = f'{city_url}/{date}'
     sinoptik_url = urllib.parse.quote(sinoptik_base_url)
 
     url = f'https://shot.screenshotapi.net/screenshot?token={Config.SCREENSHOT_API_TOKEN}&url={sinoptik_url}&width' \
@@ -236,29 +219,36 @@ def weather(update: Update, context: CallbackContext, db):
     tmp_msg = message.reply_text('Потрібно зачекати, зараз усе буде)')
     message.reply_chat_action(ChatAction.UPLOAD_PHOTO)
 
-    city = get_city_by_user(db, user.id)
-    user_model = get_user(db, user.id)
-    user_time = get_user_time(user_model.timezone)['timestamp']
+    row = get_city_by_user(db, user.id)
+    if not row:
+        tmp_msg.edit_text('⚠ Схоже місто для погоди не налаштовано, без цьго я не знаю що робити!\n\n'
+                          'Для налаштування міста обери відповідний пункт у налаштуваннях - /settings')
+        return
 
-    # TODO: add dialog
-    # if not city:
-    #     tmp_msg.delete()
-    #     return message.reply_text('City is not configured!')
+    city_model, user_model = row[0], row[1]
+    user_time = get_time_from_offset(user_model.timezone_offset)['dt']
+
+    took_from = f'Погода у {city_model.name} взято [тут]({city_model.url}).'
+    took_from = escape_str_md2(took_from, MessageEntity.TEXT_LINK)
 
     if int(user_time.hour) in range(20, 24):
         tomorrow = user_time + timedelta(days=1)
         tomorrow = tomorrow.strftime('%Y-%m-%d')
 
         message.reply_chat_action(ChatAction.UPLOAD_PHOTO)
-        if resp := get_weather_pic(city.name, tomorrow):
-            message.reply_photo(resp.content)
+        if resp := get_weather_pic(city_model.url, tomorrow):
+            message.reply_photo(resp.content,
+                                caption=took_from,
+                                parse_mode=ParseMode.MARKDOWN_V2)
         else:
             message.reply_chat_action(ChatAction.TYPING)
             message.reply_text(get_weather_tomorrow())
     else:
         message.reply_chat_action(ChatAction.UPLOAD_PHOTO)
-        if resp := get_weather_pic():
-            message.reply_photo(resp.content)
+        if resp := get_weather_pic(city_model.url):
+            message.reply_photo(resp.content,
+                                caption=took_from,
+                                parse_mode=ParseMode.MARKDOWN_V2)
         else:
             message.reply_chat_action(ChatAction.TYPING)
             message.reply_text(get_weather_text(curr_time=user_time))
