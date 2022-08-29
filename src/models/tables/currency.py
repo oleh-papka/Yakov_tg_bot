@@ -9,7 +9,7 @@ class Currency(Base):
     __tablename__ = 'currency'
 
     id = Column(INTEGER, primary_key=True, autoincrement=True)
-    name = Column(VARCHAR(20), nullable=False)
-    symbol = Column(VARCHAR(10), nullable=False)
+    name = Column(VARCHAR(5), nullable=False)
+    symbol = Column(VARCHAR(5), nullable=False)
 
     user = relationship('User', secondary='currency_watchlist')

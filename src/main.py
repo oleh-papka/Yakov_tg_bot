@@ -15,7 +15,7 @@ from commands import (
 from commands.settings import settings_conversation_handler
 from config import Config
 from handlers import error_handler, unknown_handler, days_passed_handler
-from scripts.fill_db import create_all_coins
+from scripts.fill_db import populate_currency, populate_crypto_currency
 
 
 def main() -> None:
@@ -46,8 +46,9 @@ def main() -> None:
 
     bot.set_my_commands(Config.BOT_COMMANDS)
 
-    # Line below should be used only once at first start of bot
-    # create_all_coins()
+    # Lines below should be used only once at first start of bot
+    # populate_currency()
+    # populate_crypto_currency()
 
     if Config.WEBHOOK_FLAG:
         Config.LOGGER.info(f'Starting bot at {Config.BOT_LINK}')

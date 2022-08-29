@@ -4,6 +4,7 @@ from telegram import Update, ChatAction, ParseMode
 from telegram.ext import CallbackContext, CommandHandler
 
 from config import Config
+from crud.currency import get_curr_by_user
 from crud.user import auto_create_user
 from utils.db_utils import create_session
 from utils.message_utils import send_chat_action, escape_str_md2
@@ -18,17 +19,22 @@ def currency(update: Update, context: CallbackContext, db):
     user_model = auto_create_user(db, user)
     user_time = get_time_from_offset(user_model.timezone_offset)
 
-    currencies_emoji_mapping = {
-        'usd': '🇺🇸',
-        'eur': '🇪🇺',
-        'pln': '🇵🇱'
-    }
     url = "https://minfin.com.ua/ua/currency/{}"
 
     msg = f"Дані по валюті на (*{user_time['date_time']}*)\n\n"
     err_msg = "Ситуація, не можу отримати дані із сайту..."
 
-    for curr, emoji in currencies_emoji_mapping.items():
+    curr_models = get_curr_by_user(db, update.effective_user.id)
+
+    if not curr_models:
+        msg = '⚠ Жодної валюти не вказано для відстежування, ' \
+              'щоб налаштувати команду, обери відповідні в нелаштуваннях - /settings'
+        message.reply_text(msg)
+        return
+
+    for model in curr_models:
+        curr = model.name
+        emoji = model.symbol
         response = requests.get(url.format(curr))
 
         if not response.ok:

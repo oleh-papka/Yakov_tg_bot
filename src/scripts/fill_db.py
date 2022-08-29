@@ -5,10 +5,14 @@ import models
 from config import Config
 
 
-def create_all_coins():
+def _create_session():
     engine = create_engine(Config.DB_URL)
     Session = sessionmaker(bind=engine)
     session = Session()
+    return session
+
+
+def populate_crypto_currency():
     crypto_models = [
         models.CryptoCurrency(id=1, name='Bitcoin', abbr='BTC'),
         models.CryptoCurrency(id=1027, name='Ethereum', abbr='ETH'),
@@ -18,8 +22,23 @@ def create_all_coins():
         models.CryptoCurrency(id=74, name='Dogecoin', abbr='DOGE')
     ]
 
-    with session as db:
+    with _create_session() as db:
         for crypto_model in crypto_models:
             db.add(crypto_model)
+
+        db.commit()
+
+
+def populate_currency():
+    curr_models = [
+        models.Currency(name='usd', symbol='🇺🇸'),
+        models.Currency(name='eur', symbol='🇪🇺'),
+        models.Currency(name='pln', symbol='🇵🇱'),
+        models.Currency(name='gbp', symbol='🇬🇧')
+    ]
+
+    with _create_session() as db:
+        for curr_model in curr_models:
+            db.add(curr_model)
 
         db.commit()

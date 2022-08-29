@@ -7,6 +7,7 @@ from telegram.ext import ConversationHandler, CallbackQueryHandler, CommandHandl
 from config import Config
 from crud.city import get_city_by_name, get_city_by_user, create_city
 from crud.crypto_currency import get_crypto_by_user, get_crypto_by_abbr
+from crud.currency import get_curr_by_user, get_curr_by_name
 from crud.user import auto_create_user, get_user, update_user
 from handlers.canel_conversation import cancel, cancel_keyboard
 from utils.db_utils import create_session
@@ -14,12 +15,13 @@ from utils.message_utils import send_chat_action
 from utils.time_utils import timezone_offset_repr
 from utils.weather_utils import get_city_info, get_sinoptik_url
 
-CONV_START, USER_CITY_CHANGE, USER_CITY_TIMEZONE_CHECK, USER_TIMEZONE_CHANGE, USER_CRYPTO_CHANGE = 1, 2, 3, 4, 5
+CONV_START, USER_CITY_CHANGE, USER_CITY_TIMEZONE_CHECK, USER_TIMEZONE_CHANGE, USER_CRYPTO_CHANGE, USER_CURR_CHANGE = 1, 2, 3, 4, 5, 6
 
 main_settings_keyboard = InlineKeyboardMarkup([
     [InlineKeyboardButton('Змінити місто 🏙️', callback_data='city')],
     [InlineKeyboardButton('Змінити часовий пояс 🌐', callback_data='timezone')],
     [InlineKeyboardButton('Змінити крипто валюти 🪙', callback_data='crypto')],
+    [InlineKeyboardButton('Змінити валюти 🇺🇦', callback_data='curr')],
     [InlineKeyboardButton('🚫 Відмінити', callback_data='cancel')]
 ], )
 
@@ -293,6 +295,77 @@ def user_crypto_change(update: Update, context: CallbackContext, db):
     return USER_CRYPTO_CHANGE
 
 
+def compose_curr_keyboard(data: list | None = None):
+    data = [] if data is None else data
+
+    usd = '☑' if 'usd' in data else '❌'
+    eur = '☑' if 'eur' in data else '❌'
+    pln = '☑' if 'pln' in data else '❌'
+    gbp = '☑' if 'gbp' in data else '❌'
+
+    curr_keyboard = InlineKeyboardMarkup([
+        [
+            InlineKeyboardButton(f'USD {usd}', callback_data='usd'),
+            InlineKeyboardButton(f'EUR {eur}', callback_data='eur'),
+            InlineKeyboardButton(f'PLN {pln}', callback_data='pln'),
+            InlineKeyboardButton(f'GBP {gbp}', callback_data='gbp'),
+        ],
+        [InlineKeyboardButton('🚫 Відмінити', callback_data='cancel')]
+    ])
+
+    return curr_keyboard
+
+
+@create_session
+def user_curr_check(update: Update, context: CallbackContext, db):
+    query = update.callback_query
+    message = query.message
+    query.answer()
+    context.user_data['reply_msg_id'] = message.message_id
+
+    msg = '🆗 Обрано зміну валют.\n\nМенеджемент валютами можеш проводити нижче, щоб відстежувати відповідну.'
+
+    if curr_models := get_curr_by_user(db, update.effective_user.id):
+        data = [model.abbr for model in curr_models]
+    else:
+        data = []
+
+    curr_keyboard = compose_curr_keyboard(data)
+
+    context.user_data['message_with_markup'] = message.edit_text(text=msg, reply_markup=curr_keyboard)
+    context.user_data['curr_data'] = data
+    return USER_CURR_CHANGE
+
+
+@create_session
+@send_chat_action(ChatAction.TYPING)
+def user_curr_change(update: Update, context: CallbackContext, db):
+    query = update.callback_query
+    query.answer()
+    message = query.message
+
+    user_model = get_user(db, update.effective_user.id)
+
+    user_choice = query.data
+    data = context.user_data['curr_data']
+    model = get_curr_by_name(db, user_choice)
+    if user_choice in data:
+        data.remove(user_choice)
+        user_model.currency.remove(model)
+    else:
+        data.extend([user_choice])
+        user_model.currency.append(model)
+
+    db.commit()
+
+    curr_keyboard = compose_curr_keyboard(data)
+    message.edit_reply_markup(curr_keyboard)
+
+    context.user_data['curr_data'] = data
+
+    return USER_CURR_CHANGE
+
+
 settings_conversation_handler = ConversationHandler(
     entry_points=[CommandHandler('settings', settings)],
     states={
@@ -301,6 +374,7 @@ settings_conversation_handler = ConversationHandler(
             CallbackQueryHandler(user_city_check, pattern='^city$'),
             CallbackQueryHandler(user_timezone_check, pattern='^timezone$'),
             CallbackQueryHandler(user_crypto_check, pattern='^crypto$'),
+            CallbackQueryHandler(user_curr_check, pattern='^curr$'),
         ],
         USER_CITY_CHANGE: [
             CallbackQueryHandler(cancel, pattern='^cancel$'),
@@ -320,6 +394,10 @@ settings_conversation_handler = ConversationHandler(
         USER_CRYPTO_CHANGE: [
             CallbackQueryHandler(cancel, pattern='^cancel$'),
             CallbackQueryHandler(user_crypto_change, pattern=r'\w')
+        ],
+        USER_CURR_CHANGE: [
+            CallbackQueryHandler(cancel, pattern='^cancel$'),
+            CallbackQueryHandler(user_curr_change, pattern=r'\w')
         ]
     },
     fallbacks=[
