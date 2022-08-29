@@ -47,7 +47,7 @@ def main() -> None:
     bot.set_my_commands(Config.BOT_COMMANDS)
 
     # Line below should be used only once at first start of bot
-    create_all_coins()
+    # create_all_coins()
 
     if Config.WEBHOOK_FLAG:
         Config.LOGGER.info(f'Starting bot at {Config.BOT_LINK}')
