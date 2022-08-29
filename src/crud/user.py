@@ -20,7 +20,7 @@ def get_all_users(db, active_flag: None | bool = None) -> list:
         users = db.query(
             models.User
         ).filter(
-            models.User.active is True
+            models.User.active == True
         ).all()
     else:
         users = db.query(
