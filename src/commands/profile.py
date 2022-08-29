@@ -63,7 +63,7 @@ def user_data(update: Update, context: CallbackContext, db):
     msg += 'Для зміни та налаштування - /settings'
 
     query.edit_message_text(escape_str_md2(msg, ['*', '_']), parse_mode=ParseMode.MARKDOWN_V2, reply_markup=None)
-    context.user_data.clean()
+    context.user_data.clear()
 
     return ConversationHandler.END
 
