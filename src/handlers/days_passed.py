@@ -10,13 +10,17 @@ from crud.user import auto_create_user
 from utils.db_utils import create_session
 from utils.message_utils import send_chat_action
 
-from_date_regex = re.compile(r'^\d{1,2}(.|-|/|\s)\d{1,2}(.|-|/|\s)\d{4}$')
-from_to_date_regex = re.compile(r'^\d{1,2}(.|-|/|\s)\d{1,2}(.|-|/|\s)\d{4}\s+\d{1,2}(.|-|/|\s)\d{1,2}(.|-|/|\s)\d{4}$')
+from_date_regex = re.compile(r'^\d{1,2}(\.|-|/|\s)\d{1,2}(\.|-|/|\s)\d{4}$')
+from_to_date_regex = re.compile(r'^\d{1,2}(\.|-|/|\s)\d{1,2}(\.|-|/|\s)\d{4}\s+\d{1,2}(\.|-|/|\s)\d{1,2}(\.|-|/|\s)\d{4}$')
 
 
 def calc_date_diff(t1: datetime, t2: datetime | None = None) -> tuple:
     if t2 is None:
         t2 = datetime.now()
+
+    if (t1.tzinfo and not t2.tzinfo) or (not t1.tzinfo and t2.tzinfo):
+        t1 = t1.replace(tzinfo=None)
+        t2 = t2.replace(tzinfo=None)
 
     delta = relativedelta.relativedelta(t2, t1)
     all_days = (t2 - t1).days + 1  # Add 1 day to be inclusive
@@ -29,7 +33,7 @@ def parse_date(msg: str) -> tuple | None:
     msg = msg.strip()
     if re.match(from_date_regex, msg):
         r = msg.replace('.', ' ').replace('-', ' ').replace('/', ' ').split()
-        day, month, year = [int(el) for el in r]
+        day, month, year = (int(el) for el in r)
 
         if month > 12:
             day, month = month, day
@@ -40,7 +44,7 @@ def parse_date(msg: str) -> tuple | None:
         msg = re.sub(r'\s+', ' ', msg)
         r = msg.replace('.', ' ').replace('-', ' ').replace('/', ' ').split()
 
-        day1, month1, year1, day2, month2, year2 = [int(el) for el in r]
+        day1, month1, year1, day2, month2, year2 = (int(el) for el in r)
         if month1 > 12:
             day1, month1 = month1, day1
         if month2 > 12:

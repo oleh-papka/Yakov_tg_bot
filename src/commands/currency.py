@@ -7,6 +7,7 @@ from config import Config
 from crud.user import auto_create_user
 from utils.db_utils import create_session
 from utils.message_utils import send_chat_action, escape_str_md2
+from utils.time_utils import get_time_from_offset
 
 
 @create_session
@@ -14,7 +15,8 @@ from utils.message_utils import send_chat_action, escape_str_md2
 def currency(update: Update, context: CallbackContext, db):
     message = update.message
     user = message.from_user
-    auto_create_user(db, user)
+    user_model = auto_create_user(db, user)
+    user_time = get_time_from_offset(user_model.timezone_offset)
 
     currencies_emoji_mapping = {
         'usd': '🇺🇸',
@@ -22,7 +24,8 @@ def currency(update: Update, context: CallbackContext, db):
         'pln': '🇵🇱'
     }
     url = "https://minfin.com.ua/ua/currency/{}"
-    msg = ''
+
+    msg = f"Дані по валюті на (*{user_time['date_time']}*)\n\n"
     err_msg = "Ситуація, не можу отримати дані із сайту..."
 
     for curr, emoji in currencies_emoji_mapping.items():

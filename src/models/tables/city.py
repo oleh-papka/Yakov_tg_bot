@@ -9,6 +9,7 @@ class City(Base):
     __tablename__ = 'city'
 
     id = Column(INTEGER, primary_key=True, autoincrement=True)
+    owm_id = Column(INTEGER, nullable=False)
     name = Column(VARCHAR(50), nullable=False)
     lat = Column(REAL, nullable=True)
     lon = Column(REAL, nullable=True)

@@ -15,6 +15,21 @@ def get_user(db, user_id: int) -> models.User:
     return user
 
 
+def get_all_users(db, active_flag: None | bool = None) -> list:
+    if active_flag:
+        users = db.query(
+            models.User
+        ).filter(
+            models.User.active is True
+        ).all()
+    else:
+        users = db.query(
+            models.User
+        ).all()
+
+    return users
+
+
 def create_user(db, user: telegram.User) -> models.User:
     user_model = models.User(
         id=user.id,
@@ -27,7 +42,6 @@ def create_user(db, user: telegram.User) -> models.User:
     db.add(user_model)
     db.commit()
 
-    Config.LOGGER.info(f'Added new user {user.name} (id:{user.id})')
     return user_model
 
 
@@ -59,6 +73,8 @@ def auto_update_user(db, user: telegram.User, user_model: models.User) -> None:
         user_data['last_name'] = user.last_name
     if user_model.language_code != user.language_code:
         user_data['language_code'] = user.language_code
+    if not user_model.active:
+        user_data['active'] = True
 
     if user_data:
         update_user(db, user, user_data)

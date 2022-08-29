@@ -10,11 +10,12 @@ from commands import (
     precheckout_handler,
     successful_payment_handler,
     weather_command_handler,
-    days_passed_handler
+    profile_conversation_handler
 )
 from commands.settings import settings_conversation_handler
 from config import Config
-from handlers import error_handler, unknown_handler
+from handlers import error_handler, unknown_handler, days_passed_handler
+from scripts.fill_db import create_all_coins
 
 
 def main() -> None:
@@ -32,6 +33,7 @@ def main() -> None:
     disp.add_handler(precheckout_handler)
     disp.add_handler(successful_payment_handler)
     disp.add_handler(settings_conversation_handler)
+    disp.add_handler(profile_conversation_handler)
 
     # Text regex handlers
     disp.add_handler(days_passed_handler)
@@ -43,6 +45,9 @@ def main() -> None:
     disp.add_error_handler(error_handler)
 
     bot.set_my_commands(Config.BOT_COMMANDS)
+
+    # Line below should be used only once at first start of bot
+    create_all_coins()
 
     if Config.WEBHOOK_FLAG:
         Config.LOGGER.info(f'Starting bot at {Config.BOT_LINK}')

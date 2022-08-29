@@ -19,6 +19,7 @@ class Config:
 
     CREATOR_ID = 514328460  # Please don't remove leave credit to author
     OWNER_ID = load_env_variable('OWNER_ID', int)  # Change according to your Telegram id
+    TESTER_ID = load_env_variable('OWNER_ID', int)  # Change according to your testers Telegram id
 
     CMC_API_TOKEN = load_env_variable('CMC_API_TOKEN')  # CoinMarketCup API
     SCREENSHOT_API_TOKEN = load_env_variable('SCREENSHOT_API_TOKEN')  # Screenshot api
@@ -34,11 +35,10 @@ class Config:
         ('currency', 'Дані по валюті'),
         ('ruloss', 'Втрати кацапні'),
         ('tip_developer', 'Тестові донейти'),
+        ('profile', 'Профіль користувача'),
         ('settings', 'Налаштування'),
         ('help', 'Підказка')
     ]
-
-    CRYPTO_COIN_IDS = [1, 1027, 1839, 5426]
 
     logging_lvl = logging.DEBUG if DEBUG_FLAG else logging.INFO
 

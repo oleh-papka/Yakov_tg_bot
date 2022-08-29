@@ -3,7 +3,7 @@ from telegram.ext import CallbackContext
 from telegram.messageentity import MessageEntity
 
 
-def escape_str_md2(msg: str, exclude: str | list | None, *exclude_additional: str | list | None) -> str:
+def escape_str_md2(msg: str, exclude: str | list | None = None, *exclude_additional: str | list | None) -> str:
     if exclude is None:
         exclude = []
     elif isinstance(exclude, str):

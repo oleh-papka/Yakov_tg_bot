@@ -11,7 +11,7 @@ def create_session(func):
         session = Session()
 
         with session as db:
-            res = func(*args, **kwargs, db=session)
+            res = func(*args, **kwargs, db=db)
 
         return res
 

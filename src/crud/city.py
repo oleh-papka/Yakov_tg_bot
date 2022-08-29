@@ -1,5 +1,3 @@
-import telegram
-
 import models
 
 
@@ -25,8 +23,10 @@ def get_city_by_user(db, user_id: int) -> tuple | None:
     return row
 
 
-def create_city(db, name: str, lat: float, lon: float, url: str = None, timezone_offset: int = None) -> models.City:
+def create_city(db, owm_id: int, name: str, lat: float, lon: float, url: str = None,
+                timezone_offset: int = None) -> models.City:
     city_model = models.City(
+        owm_id=owm_id,
         name=name,
         lat=lat,
         lon=lon,
