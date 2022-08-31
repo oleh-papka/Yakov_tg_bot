@@ -19,7 +19,7 @@ class Config:
 
     CREATOR_ID = 514328460  # Please don't remove leave credit to author
     OWNER_ID = load_env_variable('OWNER_ID', int)  # Change according to your Telegram id
-    TESTER_ID = load_env_variable('OWNER_ID', int)  # Change according to your testers Telegram id
+    TESTER_ID = load_env_variable('TESTER_ID', int)  # Change according to your testers Telegram id
 
     CMC_API_TOKEN = load_env_variable('CMC_API_TOKEN')  # CoinMarketCup API
     SCREENSHOT_API_TOKEN = load_env_variable('SCREENSHOT_API_TOKEN')  # Screenshot api

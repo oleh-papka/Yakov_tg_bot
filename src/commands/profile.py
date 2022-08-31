@@ -54,11 +54,17 @@ def user_data(update: Update, context: CallbackContext, db):
     since = user_model.joined.strftime('%d/%m/%Y')
     city = get_city_by_user(db, user.id)
     city = 'Немає інформації' if not city else city[0].name
+    crypto_curr = '*, *'.join([crypto.abbr for crypto in user_model.crypto_currency])
+    crypto_curr = 'Немає інформації' if not crypto_curr else crypto_curr
+    curr = '*, *'.join([curr.name.upper() for curr in user_model.currency])
+    curr = 'Немає інформації' if not curr else curr
 
     msg = f'🆗 Гаразд, ось усі твої дані: \n\n'
     msg += f'Місто: *{city}*\n'
     msg += f'Часовий пояс: *{timezone_offset_repr(user_model.timezone_offset)}*\n'
     msg += f'Мова: *{user_model.language_code}*\n'
+    msg += f'Криптовалюти: *{crypto_curr}*\n'
+    msg += f'Валюти: *{curr}*\n'
     msg += f'Користувач із: _{since}_\n\n'
     msg += 'Для зміни та налаштування - /settings'
 
