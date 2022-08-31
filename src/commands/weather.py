@@ -24,7 +24,7 @@ def weather(update: Update, context: CallbackContext, db):
 
     city_model, user_model = row[0], row[1]
     user_time = UserTime(offset=user_model.timezone_offset)
-    date = user_time.tomorrow.date_repr() if user_time.next_day_flag else None
+    date = user_time.tomorrow.date_repr() if user_time.next_day_flag else user_time.date_repr()
 
     weather_in_msg = f'Погода у {city_model.name}'
 
