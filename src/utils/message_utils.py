@@ -15,13 +15,14 @@ def escape_str_md2(msg: str, exclude: str | list | None = None, *exclude_additio
         raise ValueError
 
     if exclude_additional:
-        if isinstance(exclude_additional, str):
-            if exclude_additional == MessageEntity.TEXT_LINK:
-                exclude_additional = ['(', ')', '[', ']']
-            else:
-                exclude_additional = [character for character in exclude]
+        for i in exclude_additional:
+            if isinstance(i, str):
+                if i == MessageEntity.TEXT_LINK:
+                    i = ['(', ')', '[', ']']
+                else:
+                    i = [character for character in exclude]
 
-        exclude.extend(exclude_additional)
+            exclude.extend(i)
 
     escape_symbols = ['_', '*', '[', ']', '(', ')', '~', '`', '>', '#', '+', '-', '=', '|', '{', '}', '.', '!']
 

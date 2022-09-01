@@ -2,6 +2,7 @@ from datetime import datetime
 
 from sqlalchemy import Column, ForeignKey
 from sqlalchemy.dialects.postgresql import INTEGER, TEXT, TIMESTAMP, BOOLEAN
+from sqlalchemy.orm import relationship
 
 from models.base import Base
 
@@ -15,3 +16,5 @@ class Feedback(Base):
     msg_text = Column(TEXT, nullable=False)
     read_flag = Column(BOOLEAN, nullable=False)
     timestamp = Column(TIMESTAMP, nullable=False, default=datetime.utcnow)
+
+    user = relationship('User')

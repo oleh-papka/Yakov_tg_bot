@@ -10,12 +10,20 @@ from commands import (
     precheckout_handler,
     successful_payment_handler,
     weather_command_handler,
-    profile_conversation_handler
+    profile_conversation_handler,
+    feedback_handler,
+    feedback_reply_handler,
+    settings_conversation_handler
 )
-from commands.settings import settings_conversation_handler
 from config import Config
-from handlers import error_handler, unknown_handler, days_passed_handler
-from scripts.fill_db import populate_currency, populate_crypto_currency
+from handlers import (
+    error_handler,
+    unknown_handler,
+    days_passed_handler
+)
+
+# Line below used for importing dependencies for initial bot setup, runs only once at first start
+# from scripts.fill_db import populate_currency, populate_crypto_currency
 
 
 def main() -> None:
@@ -34,6 +42,8 @@ def main() -> None:
     disp.add_handler(successful_payment_handler)
     disp.add_handler(settings_conversation_handler)
     disp.add_handler(profile_conversation_handler)
+    disp.add_handler(feedback_handler)
+    disp.add_handler(feedback_reply_handler)
 
     # Text regex handlers
     disp.add_handler(days_passed_handler)
