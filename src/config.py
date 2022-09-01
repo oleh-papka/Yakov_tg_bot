@@ -4,7 +4,7 @@ from utils.env_utils import load_env_variable
 
 
 class Config:
-    BOT_VERSION = 'v0.0.2'
+    BOT_VERSION = 'v0.0.3'
 
     DEBUG_FLAG = bool(load_env_variable('DEBUG_FLAG', int))  # If enabled shows all logging info
     WEBHOOK_FLAG = bool(load_env_variable('WEBHOOK_FLAG', int))  # For Heroku usage set to True else False
@@ -36,6 +36,7 @@ class Config:
         ('ruloss', 'Втрати кацапні'),
         ('tip_developer', 'Тестові донейти'),
         ('profile', 'Профіль користувача'),
+        ('feedback', 'Надіслати відгук'),
         ('settings', 'Налаштування'),
         ('help', 'Підказка')
     ]
