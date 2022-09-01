@@ -20,6 +20,7 @@ def feedback(update: Update, context: CallbackContext):
     message.reply_chat_action(ChatAction.TYPING)
     msg = message.reply_text('Ок, надішліть свій фідбек:\n\nВідмінити ввід - /cancel')
     context.user_data['reply_msg_id'] = msg.message_id
+    context.user_data['reply_markup'] = msg
 
     return CONV_START
 
@@ -62,7 +63,7 @@ def feedback_reply(update: Update, context: CallbackContext, db):
 
     feedback_model = get_feedback_by_msg_id(db, msg_id)
     if not feedback_model:
-        message.reply_text(escape_str_md2(f'Дивно немає фідбеку із msg_id=`{msg_id}`'),
+        message.reply_text(escape_str_md2(f'Дивно немає фідбеку із msg_id=`{msg_id}`', ['`']),
                            parse_mode=ParseMode.MARKDOWN_V2)
         return ConversationHandler.END
 

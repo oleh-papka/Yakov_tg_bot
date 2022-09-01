@@ -25,8 +25,9 @@ def cancel(update: Update, context: CallbackContext):
         message = update.message
         user_id = message.from_user.id
         reply_msg_id = context.user_data['reply_msg_id']
-        reply_markup_msg = context.user_data['reply_markup']
-        context.bot.edit_message_reply_markup(user_id, reply_markup_msg.message_id)
+        reply_markup_msg = context.user_data.get('reply_markup')
+        if reply_markup_msg:
+            context.bot.edit_message_reply_markup(user_id, reply_markup_msg.message_id)
 
         Config.LOGGER.debug(f"User '{user_id}' canceled the conversation")
         message.reply_text(CONVERSATION_CANCELED, reply_to_message_id=reply_msg_id)
