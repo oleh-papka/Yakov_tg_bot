@@ -32,7 +32,7 @@ class Config:
     ###########################################################################
     #                        Do not change line below ⬇                       #
     ###########################################################################
-    CREATOR_ID = 514328460  # Please credit to author
+    CREATOR_ID = 514328460  # Please leave credit to author
 
     SPACING = '⠀⠀  '  # Main whitespace characters used in formatting
 
