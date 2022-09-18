@@ -2,7 +2,7 @@ from telegram import ParseMode, ChatAction, Update, MessageEntity
 from telegram.ext import CommandHandler, CallbackContext
 
 from config import Config
-from crud.user import auto_create_user
+from crud.user import manage_user
 from utils.db_utils import create_session
 from utils.message_utils import escape_str_md2, send_chat_action
 
@@ -26,8 +26,8 @@ def _compose_help_message() -> str:
 @send_chat_action(ChatAction.TYPING)
 def help_command(update: Update, context: CallbackContext, db) -> None:
     message = update.message
-    user = message.from_user
-    auto_create_user(db, user)
+    user = update.effective_user
+    manage_user(db, user)
 
     message.reply_text(
         escape_str_md2(_compose_help_message(), exclude=MessageEntity.TEXT_LINK),

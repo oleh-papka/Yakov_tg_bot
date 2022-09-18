@@ -6,12 +6,13 @@ from telegram import Update, ChatAction
 from telegram.ext import CallbackContext, MessageHandler, Filters
 
 from config import Config
-from crud.user import auto_create_user
+from crud.user import manage_user
 from utils.db_utils import create_session
 from utils.message_utils import send_chat_action
 
 from_date_regex = re.compile(r'^\d{1,2}(\.|-|/|\s)\d{1,2}(\.|-|/|\s)\d{4}$')
-from_to_date_regex = re.compile(r'^\d{1,2}(\.|-|/|\s)\d{1,2}(\.|-|/|\s)\d{4}\s+\d{1,2}(\.|-|/|\s)\d{1,2}(\.|-|/|\s)\d{4}$')
+from_to_date_regex = re.compile(
+    r'^\d{1,2}(\.|-|/|\s)\d{1,2}(\.|-|/|\s)\d{4}\s+\d{1,2}(\.|-|/|\s)\d{1,2}(\.|-|/|\s)\d{4}$')
 
 
 def calc_date_diff(t1: datetime, t2: datetime | None = None) -> tuple:
@@ -94,9 +95,9 @@ def compose_passed_days_msg(data: tuple, desc: str | None = None) -> str:
 @send_chat_action(ChatAction.TYPING)
 def days_passed(update: Update, context: CallbackContext, db):
     message = update.message
-    user = message.from_user
+    user = update.effective_user
     text = message.text
-    auto_create_user(db, user)
+    manage_user(db, user)
 
     parsed_date = parse_date(text)
     msg = compose_passed_days_msg(data=calc_date_diff(*parsed_date))

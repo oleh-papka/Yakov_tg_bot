@@ -8,7 +8,7 @@ from config import Config
 from crud.city import get_city_by_name, get_city_by_user, create_city
 from crud.crypto_currency import get_crypto_by_user, get_crypto_by_abbr
 from crud.currency import get_curr_by_user, get_curr_by_name
-from crud.user import auto_create_user, get_user, update_user
+from crud.user import manage_user, get_user, update_user
 from handlers.canel_conversation import cancel, cancel_keyboard
 from utils.db_utils import create_session
 from utils.message_utils import send_chat_action
@@ -31,11 +31,13 @@ main_settings_keyboard = InlineKeyboardMarkup([
 def settings(update: Update, context: CallbackContext, db):
     message = update.message
     user = message.from_user
-    auto_create_user(db, user)
-    context.user_data['reply_msg_id'] = message.message_id
+    context.user_data['cancel_reply_msg_id'] = message.message_id
 
-    context.user_data['reply_markup'] = message.reply_text('Бажаєш змінити щось?\nОбери з нижче наведених опцій:',
-                                                           reply_markup=main_settings_keyboard)
+    manage_user(db, user)
+
+    context.user_data['cancel_reply_message'] = message.message_id
+    context.user_data['cancel_reply_markup_msg'] = message.reply_text(
+        'Бажаєш змінити щось?\nОбери з нижче наведених опцій:', reply_markup=main_settings_keyboard)
 
     return CONV_START
 
@@ -45,7 +47,6 @@ def user_city_check(update: Update, context: CallbackContext, db):
     query = update.callback_query
     message = query.message
     query.answer()
-    context.user_data['reply_msg_id'] = message.message_id
 
     msg = '🆗 Обрано зміну міста для прогнозу погоди.\n\n'
 
@@ -59,7 +60,7 @@ def user_city_check(update: Update, context: CallbackContext, db):
     msg += '\n\nP.S. Будь ласка вказуй назву міста українською мовою, якщо можливо, ' \
            'я не досконало знаю англійську, тому можуть виникати проблеми...'
 
-    context.user_data['message_with_markup'] = message.edit_text(text=msg, reply_markup=cancel_keyboard)
+    context.user_data['msg_with_markup'] = message.edit_text(text=msg, reply_markup=cancel_keyboard)
 
     return USER_CITY_CHANGE
 
@@ -68,10 +69,8 @@ def user_city_check(update: Update, context: CallbackContext, db):
 @send_chat_action(ChatAction.TYPING)
 def user_city_change(update: Update, context: CallbackContext, db):
     message = update.message
-
-    message_with_markup = context.user_data['message_with_markup']
-    message_with_markup.edit_reply_markup()
-    context.user_data['reply_msg_id'] = message.message_id
+    msg_with_markup = context.user_data['msg_with_markup']
+    context.user_data['cancel_reply_msg_id'] = message.message_id
 
     err_msg = '⚠ Cхоже назва міста вказана не вірно, я не можу занйти такого міста, спробуй ще раз.'
     warning_msg = '\n\n⚠ Hey, you wrote city name not in Cyrillic, ' \
@@ -80,17 +79,18 @@ def user_city_change(update: Update, context: CallbackContext, db):
                   'бачити лиш текст замість красивої картинки. Сподіваюсь це тебе влаштує,' \
                   'для того, щоб змінити місто достатньо обрати відповідний пункт в команді /settings'
 
+    msg_with_markup.edit_reply_markup()
     user_input = message.text.strip().capitalize()
 
     if re.search(r'\d|[.^$*+?\[\](){}\\,/!@#%&|~`\'\";:_=<>]', user_input) or len(user_input) > 20:
-        context.user_data['message_with_markup'] = message.reply_text(err_msg, reply_markup=cancel_keyboard)
+        context.user_data['msg_with_markup'] = message.reply_text(err_msg, reply_markup=cancel_keyboard)
         return USER_CITY_CHANGE
 
     user_model = get_user(db, message.from_user.id)
     city_data = get_city_info(user_input)
 
     if not city_data:
-        context.user_data['message_with_markup'] = message.reply_text(err_msg, reply_markup=cancel_keyboard)
+        context.user_data['msg_with_markup'] = message.reply_text(err_msg, reply_markup=cancel_keyboard)
         return USER_CITY_CHANGE
 
     city_name_eng = city_data['name']
@@ -145,7 +145,6 @@ def user_city_change(update: Update, context: CallbackContext, db):
         return USER_CITY_TIMEZONE_CHECK
 
     context.user_data.clear()
-
     return ConversationHandler.END
 
 
@@ -154,7 +153,6 @@ def change_timezone_to_city(update: Update, context: CallbackContext, db):
     query = update.callback_query
     user = query.from_user
     query.answer()
-    context.user_data['reply_msg_id'] = query.message.message_id
 
     city_model = context.user_data.get('city_model')
     timezone_offset = city_model.timezone_offset
@@ -167,6 +165,8 @@ def change_timezone_to_city(update: Update, context: CallbackContext, db):
     msg = f'✅ Зроблено, твій часовий пояс тепер відповідає вказаному місту ' \
           f'{city_model.name} ({timezone_offset_repr(city_model.timezone_offset)}).'
     query.edit_message_text(text=msg, reply_markup=None)
+
+    context.user_data.clear()
     return ConversationHandler.END
 
 
@@ -176,8 +176,8 @@ def user_timezone_check(update: Update, context: CallbackContext, db):
     query.answer()
     message = query.message
 
-    context.user_data['reply_msg_id'] = message.message_id
-    context.user_data['markup_msg'] = message
+    context.user_data['cancel_reply_msg_id'] = message.message_id
+    context.user_data['cancel_reply_markup_msg_id'] = message.message_id
 
     row = get_city_by_user(db, query.from_user.id)
     city_model, user_model = row[0], row[1]
@@ -191,6 +191,7 @@ def user_timezone_check(update: Update, context: CallbackContext, db):
            f'Для зміни часового поясу надішли відповідний у наступному повідомленні (Приклад: +3).'
 
     message.edit_text(text=msg, reply_markup=cancel_keyboard)
+
     return USER_TIMEZONE_CHANGE
 
 
@@ -200,21 +201,24 @@ def user_timezone_change(update: Update, context: CallbackContext, db):
     message = update.message
     user = message.from_user
     user_input = message.text.strip()
-    markup_msg = context.user_data['markup_msg']
-    markup_msg.edit_reply_markup()
+
+    msg_with_markup = context.user_data['msg_with_markup']
+    msg_with_markup.edit_reply_markup()
 
     if re.match(r'^[+|-]?[1-9][0-2]?$', user_input) and abs(int(user_input)) in range(1, 13):
         timezone_offset = int(user_input) * 3600
     else:
         msg = '⚠ Cхоже часовий пояс вказано не вірно, спробуй ще раз.'
-        context.user_data['markup_msg'] = message.reply_text(text=msg, reply_markup=cancel_keyboard)
+        context.user_data['msg_with_markup'] = message.reply_text(text=msg, reply_markup=cancel_keyboard)
         return USER_TIMEZONE_CHANGE
 
-    context.user_data['reply_msg_id'] = message.message_id
+    context.user_data['cancel_reply_msg_id'] = message.message_id
     update_user(db, user, {'timezone_offset': timezone_offset})
 
     msg = f'✅ Зроблено, твій часовий пояс тепер {timezone_offset_repr(timezone_offset)}'
     message.reply_text(text=msg, reply_markup=None)
+
+    context.user_data.clear()
     return ConversationHandler.END
 
 
@@ -250,7 +254,7 @@ def user_crypto_check(update: Update, context: CallbackContext, db):
     query = update.callback_query
     message = query.message
     query.answer()
-    context.user_data['reply_msg_id'] = message.message_id
+    context.user_data['cancel_reply_msg_id'] = message.message_id
 
     msg = '🆗 Обрано зміну криптовалют.\n\nМенеджемент криптою можеш проводити нижче, щоб відстежувати відповідну.'
 
@@ -261,8 +265,9 @@ def user_crypto_check(update: Update, context: CallbackContext, db):
 
     crypto_keyboard = compose_crypto_keyboard(data)
 
-    context.user_data['message_with_markup'] = message.edit_text(text=msg, reply_markup=crypto_keyboard)
+    context.user_data['msg_with_markup'] = message.edit_text(text=msg, reply_markup=crypto_keyboard)
     context.user_data['crypto_data'] = data
+
     return USER_CRYPTO_CHANGE
 
 
@@ -321,18 +326,18 @@ def user_curr_check(update: Update, context: CallbackContext, db):
     query = update.callback_query
     message = query.message
     query.answer()
-    context.user_data['reply_msg_id'] = message.message_id
+    context.user_data['cancel_reply_msg_id'] = message.message_id
 
     msg = '🆗 Обрано зміну валют.\n\nМенеджемент валютами можеш проводити нижче, щоб відстежувати відповідну.'
 
     if curr_models := get_curr_by_user(db, update.effective_user.id):
-        data = [model.abbr for model in curr_models]
+        data = [model.name for model in curr_models]
     else:
         data = []
 
     curr_keyboard = compose_curr_keyboard(data)
 
-    context.user_data['message_with_markup'] = message.edit_text(text=msg, reply_markup=curr_keyboard)
+    context.user_data['msg_with_markup'] = message.edit_text(text=msg, reply_markup=curr_keyboard)
     context.user_data['curr_data'] = data
     return USER_CURR_CHANGE
 

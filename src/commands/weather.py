@@ -2,7 +2,7 @@ from telegram import ChatAction, Update, ParseMode, MessageEntity
 from telegram.ext import CommandHandler, CallbackContext
 
 from crud.city import get_city_by_user
-from crud.user import auto_create_user
+from crud.user import manage_user
 from utils.db_utils import create_session
 from utils.message_utils import send_chat_action, escape_str_md2
 from utils.time_utils import UserTime
@@ -13,10 +13,10 @@ from utils.weather_utils import get_weather_pic, get_weather_data_owm, get_weath
 @send_chat_action(ChatAction.UPLOAD_PHOTO)
 def weather(update: Update, context: CallbackContext, db):
     message = update.message
-    user = message.from_user
-    auto_create_user(db, user)
-
+    user = update.effective_user
+    manage_user(db, user)
     row = get_city_by_user(db, user.id)
+
     if not row:
         message.reply_text('⚠ Схоже місто для погоди не налаштовано, без цьго я не знаю, що робити!\n\n'
                            'Для налаштування міста обери відповідний пункт у налаштуваннях - /settings')

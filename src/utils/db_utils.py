@@ -7,10 +7,9 @@ from config import Config
 def create_session(func):
     def wrapper(*args, **kwargs):
         engine = create_engine(Config.DB_URL)
-        Session = sessionmaker(bind=engine)
-        session = Session()
+        session = sessionmaker(bind=engine)
 
-        with session as db:
+        with session() as db:
             res = func(*args, **kwargs, db=db)
 
         return res

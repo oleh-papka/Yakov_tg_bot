@@ -1,6 +1,5 @@
 beautifulsoup4
 lxml
-psycopg2
 python-dateutil
 python-telegram-bot
 pytz

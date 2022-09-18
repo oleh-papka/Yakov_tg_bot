@@ -6,7 +6,7 @@ from telegram.ext import MessageHandler, CallbackQueryHandler, CommandHandler, C
 
 from config import Config
 from crud.city import get_city_by_user
-from crud.user import auto_create_user, get_all_users, update_user
+from crud.user import manage_user, get_all_users, update_user
 from handlers import cancel
 from handlers.canel_conversation import cancel_keyboard
 from utils.db_utils import create_session
@@ -21,8 +21,10 @@ CONV_START, GET_MESSAGE, SEND_MESSAGE = 1, 2, 3
 def profile(update: Update, context: CallbackContext, db):
     message = update.message
     user = message.from_user
-    auto_create_user(db, user)
     context.user_data.clear()
+    context.user_data['cancel_reply_msg_id'] = message.message_id
+
+    manage_user(db, user)
 
     resp_keyboard = [
         [InlineKeyboardButton('Мої дані 📊', callback_data='user_data')],
@@ -38,8 +40,7 @@ def profile(update: Update, context: CallbackContext, db):
 
     reply_keyboard = InlineKeyboardMarkup(resp_keyboard)
     msg = f'{user.name}, у цій команді багато трішки різного, обирай нижче:'
-    reply_message = message.reply_text(msg, reply_markup=reply_keyboard)
-    context.user_data['reply_msg_id'] = reply_message.message_id
+    message.reply_text(msg, reply_markup=reply_keyboard)
 
     return CONV_START
 
@@ -50,7 +51,7 @@ def user_data(update: Update, context: CallbackContext, db):
     user = update.effective_user
     query.answer()
 
-    user_model = auto_create_user(db, user)
+    user_model = manage_user(db, user)
     since = user_model.joined.strftime('%d/%m/%Y')
     city = get_city_by_user(db, user.id)
     city = 'Немає інформації' if not city else city[0].name
@@ -69,14 +70,15 @@ def user_data(update: Update, context: CallbackContext, db):
     msg += 'Для зміни та налаштування - /settings'
 
     query.edit_message_text(escape_str_md2(msg, ['*', '_']), parse_mode=ParseMode.MARKDOWN_V2, reply_markup=None)
-    context.user_data.clear()
 
+    context.user_data.clear()
     return ConversationHandler.END
 
 
 def send_to(update: Update, context: CallbackContext):
     query = update.callback_query
     query.answer()
+
     msg = '🆗 Гаразд, будемо сповіщати {}\n\nНадішли текст цього повідомлення нижче:'
 
     if query.data == 'send_to_all':
@@ -111,11 +113,9 @@ def message_check(update: Update, context: CallbackContext):
 
     reply_keyboard = InlineKeyboardMarkup(confirmation_keyboard)
 
-    reply_message = message.reply_text('Впевнений, надіслати дане повідомлення?',
-                                       reply_markup=reply_keyboard,
-                                       reply_to_message_id=message.message_id)
-
-    context.user_data['reply_msg_id'] = reply_message.message_id
+    message.reply_text('Впевнений, надіслати дане повідомлення?',
+                       reply_markup=reply_keyboard,
+                       reply_to_message_id=message.message_id)
 
     return SEND_MESSAGE
 
@@ -124,6 +124,7 @@ def message_check(update: Update, context: CallbackContext):
 def send_message(update: Update, context: CallbackContext, db):
     query = update.callback_query
     query.answer()
+
     msg_text = context.user_data['message_text']
 
     msg = '🆗 Уже надсилаю...'
@@ -154,6 +155,7 @@ def send_message(update: Update, context: CallbackContext, db):
 
     query.edit_message_text(msg)
 
+    context.user_data.clear()
     return ConversationHandler.END
 
 

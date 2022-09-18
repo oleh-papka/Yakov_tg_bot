@@ -5,7 +5,7 @@ from telegram.ext import CallbackContext, CommandHandler
 
 from config import Config
 from crud.currency import get_curr_by_user
-from crud.user import auto_create_user
+from crud.user import manage_user
 from utils.db_utils import create_session
 from utils.message_utils import send_chat_action, escape_str_md2
 from utils.time_utils import get_time_from_offset
@@ -15,8 +15,8 @@ from utils.time_utils import get_time_from_offset
 @send_chat_action(ChatAction.TYPING)
 def currency(update: Update, context: CallbackContext, db):
     message = update.message
-    user = message.from_user
-    user_model = auto_create_user(db, user)
+    user = update.effective_user
+    user_model = manage_user(db, user)
     user_time = get_time_from_offset(user_model.timezone_offset)
 
     url = "https://minfin.com.ua/ua/currency/{}"

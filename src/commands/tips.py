@@ -2,7 +2,7 @@ from telegram import LabeledPrice, Update, ParseMode, ChatAction, MessageEntity
 from telegram.ext import CommandHandler, PreCheckoutQueryHandler, MessageHandler, Filters, CallbackContext
 
 from config import Config
-from crud.user import auto_create_user
+from crud.user import manage_user
 from utils.db_utils import create_session
 from utils.message_utils import send_chat_action, escape_str_md2
 
@@ -11,8 +11,8 @@ from utils.message_utils import send_chat_action, escape_str_md2
 @send_chat_action(ChatAction.TYPING)
 def tip_developer(update: Update, context: CallbackContext, db):
     chat_id = update.message.chat_id
-    user = update.message.from_user
-    auto_create_user(db, user)
+    user = update.effective_user
+    manage_user(db, user)
 
     title = 'Купити смаколиків розробнику'
     description = 'Я старався'
@@ -42,12 +42,9 @@ def tip_developer(update: Update, context: CallbackContext, db):
     )
 
 
-@create_session
 @send_chat_action(ChatAction.TYPING)
-def payment_precheckout(update: Update, context: CallbackContext, db):
+def payment_precheckout(update: Update, context: CallbackContext):
     query = update.pre_checkout_query
-    user = query.from_user
-    auto_create_user(db, user)
 
     if query.invoice_payload != 'Custom-Payload':
         query.answer(ok=False, error_message="Щось пішло не так...")
@@ -55,19 +52,15 @@ def payment_precheckout(update: Update, context: CallbackContext, db):
         query.answer(ok=True)
 
 
-@create_session
 @send_chat_action(ChatAction.TYPING)
-def successful_payment(update: Update, context: CallbackContext, db):
+def successful_payment(update: Update, context: CallbackContext):
     message = update.message
     payment = message.successful_payment
     user = message.from_user
-    auto_create_user(db, user)
-
-    message.reply_text("✅ Чотенько, дякую за грошенятка!")
-
     msg = f'Не повіриш! Добра душа [{user.first_name}](tg://user?id={user.id}) ' \
           f'передала тобі пару гривників \({payment.total_amount / 100:g} {payment.currency}\)!'
 
+    message.reply_text("✅ Чотенько, дякую за грошенятка!")
     context.bot.send_message(Config.OWNER_ID, escape_str_md2(msg, exclude=MessageEntity.TEXT_LINK),
                              parse_mode=ParseMode.MARKDOWN_V2)
 

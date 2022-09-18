@@ -1,3 +1,5 @@
+import logging
+
 from telegram.ext import Updater
 
 from commands import (
@@ -22,8 +24,7 @@ from handlers import (
     days_passed_handler
 )
 
-# Line below used for importing dependencies for initial bot setup, runs only once at first start
-# from scripts.fill_db import populate_currency, populate_crypto_currency
+logger = logging.getLogger(__name__)
 
 
 def main() -> None:
@@ -45,32 +46,24 @@ def main() -> None:
     disp.add_handler(feedback_handler)
     disp.add_handler(feedback_reply_handler)
 
-    # Text regex handlers
-    disp.add_handler(days_passed_handler)
+    disp.add_handler(days_passed_handler)   # Text regex handlers
+    disp.add_handler(unknown_handler)   # Unknown messages handler
 
-    # Unknown messages handler
-    disp.add_handler(unknown_handler)
-
-    # Error handler
-    disp.add_error_handler(error_handler)
+    disp.add_error_handler(error_handler)   # Error handler
 
     bot.set_my_commands(Config.BOT_COMMANDS)
 
-    # Lines below should be used only once at first start of bot
-    # populate_currency()
-    # populate_crypto_currency()
-
     if Config.WEBHOOK_FLAG:
-        Config.LOGGER.info(f'Starting bot at {Config.BOT_LINK}')
+        logger.info(f'Starting bot at {Config.BOT_LINK}')
         updater.start_webhook(listen='0.0.0.0',
                               port=Config.BOT_PORT,
                               url_path=Config.BOT_TOKEN,
                               webhook_url=Config.BOT_LINK + Config.BOT_TOKEN)
     else:
-        Config.LOGGER.info('Starting bot locally')
+        logger.info('Starting bot locally')
         updater.start_polling()
 
-    Config.LOGGER.info('Bot successfully started!')
+    logger.info(f'Bot ({bot.get_me().name}) successfully started!')
     updater.idle()
 
 

@@ -1,7 +1,7 @@
 from telegram import Update, ChatAction, ParseMode
 from telegram.ext import CommandHandler, CallbackContext
 
-from crud.user import auto_create_user
+from crud.user import get_user, manage_user
 from utils.crypto_utils import get_crypto_data, compose_crypto_msg
 from utils.db_utils import create_session
 from utils.message_utils import escape_str_md2, send_chat_action
@@ -12,8 +12,8 @@ from utils.time_utils import get_time_from_offset
 @send_chat_action(ChatAction.TYPING)
 def crypto_command(update: Update, context: CallbackContext, db) -> None:
     message = update.message
-    user = message.from_user
-    user_model = auto_create_user(db, user)
+    user = update.effective_user
+    user_model = manage_user(db, user)
     coins = [coin.id for coin in user_model.crypto_currency]
 
     if not coins:

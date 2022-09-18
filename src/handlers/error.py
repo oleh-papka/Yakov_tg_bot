@@ -1,5 +1,6 @@
 import html
 import json
+import logging
 import traceback
 
 from telegram import Update, ParseMode
@@ -7,11 +8,13 @@ from telegram.ext import CallbackContext
 
 from config import Config
 
+logger = logging.getLogger(__name__)
+
 
 def error_handler(update: Update, context: CallbackContext) -> None:
     ERROR_MSG_LENGTH = 1000 - 4  # Because "...\n" used
 
-    Config.LOGGER.error(msg="Exception while handling an update:", exc_info=context.error)
+    logger.error(msg="Exception while handling an update:", exc_info=context.error)
 
     tb_list = traceback.format_exception(None, context.error, context.error.__traceback__)
     tb_string = "".join(tb_list)
