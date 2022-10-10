@@ -2,9 +2,6 @@ from sqlalchemy.orm import Session
 
 from models import City, User
 
-
-# TODO: add to db column local_name,
-#  change url to sinoptik_url
 def get_city_by_name(db: Session, city_name: str) -> City | None:
     city_model = db.query(
         City
@@ -30,16 +27,18 @@ def get_city_by_user(db: Session, user_id: int) -> tuple | None:
 def create_city(db: Session,
                 owm_id: int,
                 name: str,
+                local_name: str,
                 lat: float,
                 lon: float,
-                url: str = None,
+                sinoptik_url: str = None,
                 timezone_offset: int = None) -> City:
     city_model = City(
         owm_id=owm_id,
         name=name,
+        local_name=local_name,
         lat=lat,
         lon=lon,
-        url=url,
+        sinoptik_url=sinoptik_url,
         timezone_offset=timezone_offset
     )
 

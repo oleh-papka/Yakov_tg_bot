@@ -4,7 +4,7 @@ import requests
 
 from config import Config
 from models import City
-from models.errors import CityFetchError, WeatherFetchError, ScreenshotAPIError
+from models.errors import CityFetchError, WeatherFetchError, ScreenshotAPIError, SinoptikURLFetchError
 from utils.time_utils import UserTime
 
 
@@ -114,7 +114,7 @@ class OpenWeatherMapAPI:
             end_n = 25 - user_time.hour
 
         url = f'https://openweathermap.org/city/{city_model.owm_id}'
-        output = (f'Погода {city_model.name} {date_verbose} \\('
+        output = (f'Погода {city_model.local_name} {date_verbose} \\('
                   f'{user_time.date_repr(True)}\\), '
                   f'взяв [тут]({url}):\n\n')
 
@@ -190,7 +190,7 @@ class SinoptikScraper:
         if resp.ok:
             return base_url
         else:
-            raise
+            raise SinoptikURLFetchError
 
 
 class ScreenshotAPI:
