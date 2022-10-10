@@ -11,7 +11,7 @@ from handlers import cancel
 from handlers.canel_conversation import cancel_keyboard
 from utils.db_utils import create_session
 from utils.message_utils import send_chat_action, escape_str_md2
-from utils.time_utils import timezone_offset_repr
+from utils.time_utils import UserTime
 
 CONV_START, GET_MESSAGE, SEND_MESSAGE = 1, 2, 3
 
@@ -62,7 +62,7 @@ def user_data(update: Update, context: CallbackContext, db):
 
     msg = f'🆗 Гаразд, ось усі твої дані: \n\n'
     msg += f'Місто: *{city}*\n'
-    msg += f'Часовий пояс: *{timezone_offset_repr(user_model.timezone_offset)}*\n'
+    msg += f'Часовий пояс: *{UserTime.timezone_offset_repr(user_model.timezone_offset)}*\n'
     msg += f'Мова: *{user_model.language_code}*\n'
     msg += f'Криптовалюти: *{crypto_curr}*\n'
     msg += f'Валюти: *{curr}*\n'

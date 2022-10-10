@@ -5,7 +5,7 @@ from crud.user import get_user, manage_user
 from utils.crypto_utils import get_crypto_data, compose_crypto_msg
 from utils.db_utils import create_session
 from utils.message_utils import escape_str_md2, send_chat_action
-from utils.time_utils import get_time_from_offset
+from utils.time_utils import UserTime
 
 
 @create_session
@@ -28,7 +28,7 @@ def crypto_command(update: Update, context: CallbackContext, db) -> None:
         message.reply_text(msg)
         return
     else:
-        time = get_time_from_offset(user_model.timezone_offset)['date_time']
+        time = UserTime.get_time_from_offset(user_model.timezone_offset)['date_time']
         msg = f'CoinMarketCup дані на (*{time}*):\n\n'
         msg += compose_crypto_msg(*crypto_data, coins=coins)
         message.reply_text(escape_str_md2(msg, exclude=['*', '_']), parse_mode=ParseMode.MARKDOWN_V2)

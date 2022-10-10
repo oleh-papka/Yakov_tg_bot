@@ -46,8 +46,9 @@ def main() -> None:
     disp.add_handler(feedback_handler)
     disp.add_handler(feedback_reply_handler)
 
-    disp.add_handler(days_passed_handler)   # Text regex handlers
-    disp.add_handler(unknown_handler)   # Unknown messages handler
+    # Text regex handlers
+    disp.add_handler(days_passed_handler)
+    disp.add_handler(unknown_handler)
 
     disp.add_error_handler(error_handler)   # Error handler
 

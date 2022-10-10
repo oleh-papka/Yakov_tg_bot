@@ -12,8 +12,8 @@ from crud.user import manage_user, get_user, update_user
 from handlers.canel_conversation import cancel, cancel_keyboard
 from utils.db_utils import create_session
 from utils.message_utils import send_chat_action
-from utils.time_utils import timezone_offset_repr
-from utils.weather_utils import get_city_info, get_sinoptik_url
+from utils.time_utils import UserTime
+from utils.weather_utils import OpenWeatherMapAPI, SinoptikScraper
 
 CONV_START, USER_CITY_CHANGE, USER_CITY_TIMEZONE_CHECK, USER_TIMEZONE_CHANGE, USER_CRYPTO_CHANGE, USER_CURR_CHANGE = 1, 2, 3, 4, 5, 6
 
@@ -87,7 +87,7 @@ def user_city_change(update: Update, context: CallbackContext, db):
         return USER_CITY_CHANGE
 
     user_model = get_user(db, message.from_user.id)
-    city_data = get_city_info(user_input)
+    city_data = OpenWeatherMapAPI.get_city(user_input)
 
     if not city_data:
         context.user_data['msg_with_markup'] = message.reply_text(err_msg, reply_markup=cancel_keyboard)
@@ -102,7 +102,7 @@ def user_city_change(update: Update, context: CallbackContext, db):
             msg = '❕ Так це ж те саме місто, жодних змін не вношу 🙃\n\n Потрібно змінити ще щось?'
 
         if not city_model.url:
-            if url := get_sinoptik_url(user_input):
+            if url := SinoptikScraper.get_url(user_input):
                 city_model.url = url
             else:
                 msg += warning_msg
@@ -113,7 +113,7 @@ def user_city_change(update: Update, context: CallbackContext, db):
         message.reply_text(msg, reply_markup=main_settings_keyboard)
         return CONV_START
     else:
-        sinoptik_base_url = get_sinoptik_url(user_input)
+        sinoptik_base_url = SinoptikScraper.get_url(user_input)
         city_model = create_city(db,
                                  owm_id=city_data['id'],
                                  name=city_name_eng,
@@ -134,7 +134,7 @@ def user_city_change(update: Update, context: CallbackContext, db):
     if city_timezone_offset and (city_timezone_offset != user_model.timezone_offset):
         msg += '\n\n❕ У тебе і цього міста різні часові пояси, змінити на відповідний місту часовий пояс?'
         approve_keyboard = InlineKeyboardMarkup([
-            [InlineKeyboardButton(f'Змінити на "{timezone_offset_repr(city_timezone_offset)}"',
+            [InlineKeyboardButton(f'Змінити на "{UserTime.offset_repr(city_timezone_offset)}"',
                                   callback_data='change_to_city')],
             [InlineKeyboardButton('Детальні налаштування 🌐', callback_data='change')],
             [InlineKeyboardButton('🚫 Відмінити', callback_data='cancel')]
@@ -163,7 +163,7 @@ def change_timezone_to_city(update: Update, context: CallbackContext, db):
     update_user(db, user, user_data)
 
     msg = f'✅ Зроблено, твій часовий пояс тепер відповідає вказаному місту ' \
-          f'{city_model.name} ({timezone_offset_repr(city_model.timezone_offset)}).'
+          f'{city_model.name} ({UserTime.offset_repr(city_model.timezone_offset)}).'
     query.edit_message_text(text=msg, reply_markup=None)
 
     context.user_data.clear()
@@ -185,9 +185,9 @@ def user_timezone_check(update: Update, context: CallbackContext, db):
     msg = '🆗 Обрано зміну часового поясу.\n\n' \
           'Поточні дані часового поясу:\n'
     if city_model:
-        msg += f'{Config.SPACING}У місті {city_model.name}: {timezone_offset_repr(city_model.timezone_offset)}\n'
+        msg += f'{Config.SPACING}У місті {city_model.name}: {UserTime.offset_repr(city_model.timezone_offset)}\n'
 
-    msg += f'{Config.SPACING}Вказаний в профілі: {timezone_offset_repr(user_model.timezone_offset)}\n\n' \
+    msg += f'{Config.SPACING}Вказаний в профілі: {UserTime.offset_repr(user_model.timezone_offset)}\n\n' \
            f'Для зміни часового поясу надішли відповідний у наступному повідомленні (Приклад: +3).'
 
     message.edit_text(text=msg, reply_markup=cancel_keyboard)
@@ -215,7 +215,7 @@ def user_timezone_change(update: Update, context: CallbackContext, db):
     context.user_data['cancel_reply_msg_id'] = message.message_id
     update_user(db, user, {'timezone_offset': timezone_offset})
 
-    msg = f'✅ Зроблено, твій часовий пояс тепер {timezone_offset_repr(timezone_offset)}'
+    msg = f'✅ Зроблено, твій часовий пояс тепер {UserTime.offset_repr(timezone_offset)}'
     message.reply_text(text=msg, reply_markup=None)
 
     context.user_data.clear()

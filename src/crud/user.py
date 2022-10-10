@@ -90,7 +90,7 @@ def auto_update_user(db, user: telegram.User, user_model: models.User) -> None:
 
 
 def manage_user(db, user: telegram.User) -> models.User:
-    """Create new user or update its data if needed"""
+    """Create new user or update user info if needed"""
     if user_model := get_user(db, user.id):
         auto_update_user(db, user, user_model)
     else:
