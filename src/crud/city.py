@@ -1,6 +1,8 @@
+from sqlalchemy.engine import Row
 from sqlalchemy.orm import Session
 
 from models import City, User
+
 
 def get_city_by_name(db: Session, city_name: str) -> City | None:
     city_model = db.query(
@@ -12,7 +14,8 @@ def get_city_by_name(db: Session, city_name: str) -> City | None:
     return city_model
 
 
-def get_city_by_user(db: Session, user_id: int) -> tuple | None:
+def get_city_by_user_id(db: Session,
+                        user_id: int) -> Row[City, User] | None:
     row = db.query(
         City,
         User

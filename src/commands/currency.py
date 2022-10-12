@@ -1,11 +1,12 @@
 import requests
 from bs4 import BeautifulSoup
+from sqlalchemy.orm import Session
 from telegram import Update, ChatAction, ParseMode
 from telegram.ext import CallbackContext, CommandHandler
 
 from config import Config
-from crud.currency import get_curr_by_user
-from crud.user import manage_user
+from crud.currency import get_curr_by_user_id
+from crud.user import create_or_update_user
 from utils.db_utils import create_session
 from utils.message_utils import send_chat_action, escape_str_md2
 from utils.time_utils import UserTime
@@ -13,10 +14,10 @@ from utils.time_utils import UserTime
 
 @create_session
 @send_chat_action(ChatAction.TYPING)
-def currency(update: Update, context: CallbackContext, db):
+def currency(update: Update, context: CallbackContext, db: Session):
     message = update.message
     user = update.effective_user
-    user_model = manage_user(db, user)
+    user_model = create_or_update_user(db, user)
     user_time = UserTime.get_time_from_offset(user_model.timezone_offset)
 
     url = "https://minfin.com.ua/ua/currency/{}"
@@ -24,11 +25,11 @@ def currency(update: Update, context: CallbackContext, db):
     msg = f"Дані по валюті на (*{user_time['date_time']}*)\n\n"
     err_msg = "Ситуація, не можу отримати дані із сайту..."
 
-    curr_models = get_curr_by_user(db, update.effective_user.id)
+    curr_models = get_curr_by_user_id(db, update.effective_user.id)
 
     if not curr_models:
-        msg = '⚠ Жодної валюти не вказано для відстежування, ' \
-              'щоб налаштувати команду, обери відповідні в нелаштуваннях - /settings'
+        msg = ('⚠ Жодної валюти не вказано для відстежування, щоб налаштувати'
+               ' команду, обери відповідні в нелаштуваннях - /settings')
         message.reply_text(msg)
         return
 
@@ -42,9 +43,8 @@ def currency(update: Update, context: CallbackContext, db):
 
         soup = BeautifulSoup(response.text, 'lxml')
 
-        table = soup.select(
-            "body > main > div.mfz-container > div > div.mfz-col-content > div > section:nth-child(3) > "
-            "div.mfm-grey-bg > table")
+        table = soup.select("body > main > div.mfz-container > div > div.mfz-col-content > "
+                            "div > section:nth-child(3) > div.mfm-grey-bg > table")
 
         if not table:
             return message.reply_text(err_msg)

@@ -1,12 +1,21 @@
 import re
 
-from telegram import ChatAction, InlineKeyboardButton, InlineKeyboardMarkup, ParseMode, Update
-from telegram.ext import MessageHandler, CallbackQueryHandler, CommandHandler, ConversationHandler, Filters, \
-    CallbackContext
+from sqlalchemy.orm import Session
+from telegram import (ChatAction,
+                      InlineKeyboardButton,
+                      InlineKeyboardMarkup,
+                      ParseMode,
+                      Update)
+from telegram.ext import (MessageHandler,
+                          CallbackQueryHandler,
+                          CommandHandler,
+                          ConversationHandler,
+                          Filters,
+                          CallbackContext)
 
 from config import Config
-from crud.city import get_city_by_user
-from crud.user import manage_user, get_all_users, update_user
+from crud.city import get_city_by_user_id
+from crud.user import create_or_update_user, get_all_users, update_user
 from handlers import cancel
 from handlers.canel_conversation import cancel_keyboard
 from utils.db_utils import create_session
@@ -18,13 +27,13 @@ CONV_START, GET_MESSAGE, SEND_MESSAGE = 1, 2, 3
 
 @create_session
 @send_chat_action(ChatAction.TYPING)
-def profile(update: Update, context: CallbackContext, db):
+def profile(update: Update, context: CallbackContext, db: Session):
     message = update.message
     user = message.from_user
     context.user_data.clear()
     context.user_data['cancel_reply_msg_id'] = message.message_id
 
-    manage_user(db, user)
+    create_or_update_user(db, user)
 
     resp_keyboard = [
         [InlineKeyboardButton('Мої дані 📊', callback_data='user_data')],
@@ -51,25 +60,28 @@ def user_data(update: Update, context: CallbackContext, db):
     user = update.effective_user
     query.answer()
 
-    user_model = manage_user(db, user)
+    user_model = create_or_update_user(db, user)
     since = user_model.joined.strftime('%d/%m/%Y')
-    city = get_city_by_user(db, user.id)
+    city = get_city_by_user_id(db, user.id)
     city = 'Немає інформації' if not city else city[0].name
     crypto_curr = '*, *'.join([crypto.abbr for crypto in user_model.crypto_currency])
     crypto_curr = 'Немає інформації' if not crypto_curr else crypto_curr
     curr = '*, *'.join([curr.name.upper() for curr in user_model.currency])
     curr = 'Немає інформації' if not curr else curr
 
+    user_timezone_repr = UserTime.offset_repr(user_model.timezone_offset)
     msg = f'🆗 Гаразд, ось усі твої дані: \n\n'
     msg += f'Місто: *{city}*\n'
-    msg += f'Часовий пояс: *{UserTime.timezone_offset_repr(user_model.timezone_offset)}*\n'
+    msg += f'Часовий пояс: *{user_timezone_repr}*\n'
     msg += f'Мова: *{user_model.language_code}*\n'
     msg += f'Криптовалюти: *{crypto_curr}*\n'
     msg += f'Валюти: *{curr}*\n'
     msg += f'Користувач із: _{since}_\n\n'
     msg += 'Для зміни та налаштування - /settings'
 
-    query.edit_message_text(escape_str_md2(msg, ['*', '_']), parse_mode=ParseMode.MARKDOWN_V2, reply_markup=None)
+    query.edit_message_text(escape_str_md2(msg, ['*', '_']),
+                            parse_mode=ParseMode.MARKDOWN_V2,
+                            reply_markup=None)
 
     context.user_data.clear()
     return ConversationHandler.END

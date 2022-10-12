@@ -1,7 +1,8 @@
+from sqlalchemy.orm import Session
 from telegram import Update, ChatAction, ParseMode
 from telegram.ext import CommandHandler, CallbackContext
 
-from crud.user import get_user, manage_user
+from crud.user import create_or_update_user
 from utils.crypto_utils import get_crypto_data, compose_crypto_msg
 from utils.db_utils import create_session
 from utils.message_utils import escape_str_md2, send_chat_action
@@ -10,15 +11,15 @@ from utils.time_utils import UserTime
 
 @create_session
 @send_chat_action(ChatAction.TYPING)
-def crypto_command(update: Update, context: CallbackContext, db) -> None:
+def crypto_command(update: Update, context: CallbackContext, db: Session) -> None:
     message = update.message
     user = update.effective_user
-    user_model = manage_user(db, user)
+    user_model = create_or_update_user(db, user)
     coins = [coin.id for coin in user_model.crypto_currency]
 
     if not coins:
-        msg = '⚠ Жодної криптовалюти не вказано для відстежування, ' \
-              'щоб налаштувати команду, обери відповідні в нелаштуваннях - /settings'
+        msg = ('⚠ Жодної криптовалюти не вказано для відстежування, щоб '
+               'налаштувати команду, обери відповідні в нелаштуваннях - /settings')
         message.reply_text(msg)
         return
 

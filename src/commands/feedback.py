@@ -1,12 +1,17 @@
 import re
 
+from sqlalchemy.orm import Session
 from telegram import ChatAction, ParseMode, Update, MessageEntity
-from telegram.ext import ConversationHandler, CallbackContext, CommandHandler, MessageHandler, Filters
+from telegram.ext import (ConversationHandler,
+                          CallbackContext,
+                          CommandHandler,
+                          MessageHandler,
+                          Filters)
 
 import models
 from config import Config
-from crud.feedback import get_feedback_by_msg_id, mark_read
-from crud.user import manage_user
+from crud.feedback import get_feedback_by_msg_id, mark_feedback_read
+from crud.user import create_or_update_user
 from handlers import cancel
 from utils.db_utils import create_session
 from utils.message_utils import send_chat_action, escape_str_md2
@@ -16,12 +21,12 @@ CONV_START, REPLY_START, DELETE_REPLIED = 1, 2, 3
 
 @create_session
 @send_chat_action(ChatAction.TYPING)
-def feedback(update: Update, context: CallbackContext, db):
+def feedback(update: Update, context: CallbackContext, db: Session):
     message = update.message
     user = update.effective_user
     context.user_data['cancel_reply_msg_id'] = message.message_id
 
-    manage_user(db, user)
+    create_or_update_user(db, user)
 
     message.reply_chat_action(ChatAction.TYPING)
     message.reply_text('Ок, надішліть свій фідбек:\n\nВідмінити ввід - /cancel')
@@ -54,7 +59,7 @@ def feedback_get_user_text(update: Update, context: CallbackContext, db):
 
 @create_session
 @send_chat_action(ChatAction.TYPING)
-def feedback_reply(update: Update, context: CallbackContext, db):
+def feedback_reply(update: Update, context: CallbackContext, db: Session):
     message = update.message
     context.user_data['cancel_reply_msg_id'] = message.message_id
 
@@ -85,7 +90,7 @@ def feedback_reply(update: Update, context: CallbackContext, db):
 
 @create_session
 @send_chat_action(ChatAction.TYPING)
-def feedback_reply_text(update: Update, context: CallbackContext, db):
+def feedback_reply_text(update: Update, context: CallbackContext, db: Session):
     message = update.message
     text = message.text
     context.user_data['cancel_reply_msg_id'] = message.message_id
@@ -102,7 +107,7 @@ def feedback_reply_text(update: Update, context: CallbackContext, db):
                              parse_mode=ParseMode.MARKDOWN_V2,
                              reply_to_message_id=feedback_reply_msg_id)
 
-    mark_read(db, feedback_reply_msg_id)
+    mark_feedback_read(db, feedback_reply_msg_id)
 
     message.reply_chat_action(ChatAction.TYPING)
     message.reply_text('✅ Чудово, я уже відповів користувачу!')

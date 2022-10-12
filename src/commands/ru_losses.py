@@ -2,10 +2,11 @@ from datetime import datetime
 
 import requests
 from bs4 import BeautifulSoup
+from sqlalchemy.orm import Session
 from telegram import ParseMode, ChatAction, Update
 from telegram.ext import CommandHandler, CallbackContext
 
-from crud.user import get_user, manage_user
+from crud.user import create_or_update_user
 from handlers.days_passed import compose_passed_days_msg, calc_date_diff
 from utils.db_utils import create_session
 from utils.message_utils import send_chat_action, escape_str_md2
@@ -14,10 +15,10 @@ from utils.time_utils import UserTime
 
 @create_session
 @send_chat_action(ChatAction.TYPING)
-def rus_losses(update: Update, context: CallbackContext, db):
+def rus_losses(update: Update, context: CallbackContext, db: Session):
     message = update.message
     user = update.effective_user
-    user_model = manage_user(db, user)
+    user_model = create_or_update_user(db, user)
     user_time = UserTime.get_time_from_offset(user_model.timezone_offset)
 
     url = 'https://index.minfin.com.ua/ua/russian-invading/casualties/'

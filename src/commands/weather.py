@@ -2,8 +2,8 @@ from sqlalchemy.orm import Session
 from telegram import ChatAction, Update, ParseMode, MessageEntity
 from telegram.ext import CommandHandler, CallbackContext
 
-from crud.city import get_city_by_user
-from crud.user import manage_user
+from crud.city import get_city_by_user_id
+from crud.user import create_or_update_user
 from utils.db_utils import create_session
 from utils.message_utils import send_chat_action, escape_str_md2
 from utils.time_utils import UserTime
@@ -12,19 +12,20 @@ from utils.weather_utils import ScreenshotAPI, OpenWeatherMapAPI
 
 @create_session
 @send_chat_action(ChatAction.UPLOAD_PHOTO)
-def weather(update: Update,
-            context: CallbackContext,
-            db: Session) -> None:
+def weather(update: Update, context: CallbackContext, db: Session) -> None:
     message = update.message
     user = update.effective_user
-    manage_user(db, user)
-    row = get_city_by_user(db, user.id)
+
+    create_or_update_user(db, user)
+    row = get_city_by_user_id(db, user.id)
+
+    # Todo: refactor
 
     if not row:
         message.reply_text(
-            '⚠ Схоже місто для погоди не налаштовано, без цьго я не знаю, '
-            'що робити!\n\nДля налаштування міста обери відповідний пункт '
-            'у налаштуваннях - /settings')
+            '⚠ Схоже місто для прогнозу погоди не налаштовано, без цього я не '
+            'знаю, що робити!\n\nДля налаштування міста обери відповідний '
+            'пункт у налаштуваннях - /settings')
         return
 
     city_model, user_model = row[0], row[1]

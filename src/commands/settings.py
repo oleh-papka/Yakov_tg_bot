@@ -1,15 +1,22 @@
 import re
 
 from sqlalchemy.orm import Session
-from telegram import ChatAction, InlineKeyboardButton, InlineKeyboardMarkup, Update
-from telegram.ext import ConversationHandler, CallbackQueryHandler, CommandHandler, MessageHandler, Filters, \
-    CallbackContext
+from telegram import (ChatAction,
+                      InlineKeyboardButton,
+                      InlineKeyboardMarkup,
+                      Update)
+from telegram.ext import (ConversationHandler,
+                          CallbackQueryHandler,
+                          CommandHandler,
+                          MessageHandler,
+                          Filters,
+                          CallbackContext)
 
 from config import Config
-from crud.city import get_city_by_name, get_city_by_user, create_city
-from crud.crypto_currency import get_crypto_by_user, get_crypto_by_abbr
-from crud.currency import get_curr_by_user, get_curr_by_name
-from crud.user import manage_user, get_user, update_user
+from crud.city import get_city_by_name, get_city_by_user_id, create_city
+from crud.crypto_currency import get_crypto_by_user_id, get_crypto_by_abbr
+from crud.currency import get_curr_by_user_id, get_curr_by_name
+from crud.user import create_or_update_user, get_user, update_user
 from handlers.canel_conversation import cancel, cancel_keyboard
 from models.errors import CityFetchError, SinoptikURLFetchError
 from utils.db_utils import create_session
@@ -40,7 +47,7 @@ def settings(update: Update, context: CallbackContext, db: Session):
     user = message.from_user
     context.user_data['cancel_reply_msg_id'] = message.message_id
 
-    manage_user(db, user)
+    create_or_update_user(db, user)
 
     context.user_data['cancel_reply_message'] = message.message_id
     context.user_data['cancel_reply_markup_msg'] = message.reply_text(
@@ -57,15 +64,15 @@ def user_city_check(update: Update, context: CallbackContext, db: Session):
 
     msg = '🆗 Обрано зміну міста для прогнозу погоди.\n\n'
 
-    if row := get_city_by_user(db, query.from_user.id):
+    if row := get_city_by_user_id(db, query.from_user.id):
         city_model, user_model = row[0], row[1]
-        msg += f'⚠ В тебе уже вказане місто - {city_model.name}. Ти справді хочеш його змінити?\n\n' \
-               f'Для зміни надішли назву міста у наступному повідомленні.'
+        msg += (f'⚠ В тебе уже вказане місто - {city_model.name}. Ти справді хочеш його змінити?\n\n' 
+                'Для зміни надішли назву міста у наступному повідомленні.')
     else:
         msg += 'Надішли мені назву міста у наступному повідомленні, щоб встановити відповідне.'
 
-    msg += '\n\nP.S. Будь ласка вказуй назву міста українською мовою, якщо можливо, ' \
-           'я не досконало знаю англійську, тому можуть виникати проблеми...'
+    msg += ('\n\nP.S. Будь ласка вказуй назву міста українською мовою, '
+            'якщо можливо, я не досконало знаю англійську, тому можуть виникати проблеми...')
 
     context.user_data['msg_with_markup'] = message.edit_text(text=msg, reply_markup=cancel_keyboard)
 
@@ -185,7 +192,7 @@ def user_timezone_check(update: Update, context: CallbackContext, db):
     context.user_data['cancel_reply_msg_id'] = message.message_id
     context.user_data['cancel_reply_markup_msg_id'] = message.message_id
 
-    row = get_city_by_user(db, query.from_user.id)
+    row = get_city_by_user_id(db, query.from_user.id)
     city_model, user_model = row[0], row[1]
 
     msg = '🆗 Обрано зміну часового поясу.\n\n' \
@@ -264,7 +271,7 @@ def user_crypto_check(update: Update, context: CallbackContext, db):
 
     msg = '🆗 Обрано зміну криптовалют.\n\nМенеджемент криптою можеш проводити нижче, щоб відстежувати відповідну.'
 
-    if crypto_models := get_crypto_by_user(db, update.effective_user.id):
+    if crypto_models := get_crypto_by_user_id(db, update.effective_user.id):
         data = [model.abbr for model in crypto_models]
     else:
         data = []
@@ -336,7 +343,7 @@ def user_curr_check(update: Update, context: CallbackContext, db):
 
     msg = '🆗 Обрано зміну валют.\n\nМенеджемент валютами можеш проводити нижче, щоб відстежувати відповідну.'
 
-    if curr_models := get_curr_by_user(db, update.effective_user.id):
+    if curr_models := get_curr_by_user_id(db, update.effective_user.id):
         data = [model.name for model in curr_models]
     else:
         data = []

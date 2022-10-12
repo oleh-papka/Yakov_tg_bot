@@ -1,22 +1,24 @@
-import models
+from sqlalchemy.orm import Session
+
+from models import Currency, User
 
 
-def get_curr_by_user(db, user_id: int) -> tuple | None:
+def get_curr_by_user_id(db: Session, user_id: int) -> list | None:
     rows = db.query(
-        models.Currency
+        Currency
     ).filter(
-        models.User.id == user_id,
-        models.User.currency
+        User.id == user_id,
+        User.currency
     ).all()
 
     return rows
 
 
-def get_curr_by_name(db, name):
+def get_curr_by_name(db: Session, name: str) -> Currency:
     row = db.query(
-        models.Currency
+        Currency
     ).filter(
-        models.Currency.name == name
+        Currency.name == name
     ).first()
 
     return row
