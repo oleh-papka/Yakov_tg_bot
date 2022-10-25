@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from models import City, User
 
 
-def get_city_by_name(db: Session, city_name: str) -> City | None:
+def get_city(db: Session, city_name: str) -> City | None:
     city_model = db.query(
         City
     ).filter(
@@ -14,8 +14,7 @@ def get_city_by_name(db: Session, city_name: str) -> City | None:
     return city_model
 
 
-def get_city_by_user_id(db: Session,
-                        user_id: int) -> Row[City, User] | None:
+def get_user_city(db: Session, user_id: int) -> Row[City, User] | None:
     row = db.query(
         City,
         User

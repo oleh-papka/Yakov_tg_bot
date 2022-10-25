@@ -36,8 +36,7 @@ class OpenWeatherMapAPI:
         """Fetch city id, english name, coords, local_names, timezone"""
         city_name = city_name.replace(' ', '-')
         geo_url = (f'http://api.openweathermap.org/geo/1.0/direct?'
-                   f'q={city_name}&appid={Config.OWM_API_TOKEN}'
-                   )
+                   f'q={city_name}&appid={Config.OWM_API_TOKEN}')
         geo_resp = requests.get(geo_url)
 
         city_data = {}
@@ -91,13 +90,11 @@ class OpenWeatherMapAPI:
         if resp.ok:
             return resp.json()
         else:
-            raise WeatherFetchError(f'Cannot fetch weather data about city'
-                                    f' with coordinates: "{lat}", "{lon}"')
+            raise WeatherFetchError(f'Cannot fetch weather data about city  with coordinates: "{lat}", "{lon}"')
 
     @staticmethod
     def compose_msg(city_model: City, user_time: UserTime) -> str:
-        weather_data = OpenWeatherMapAPI.get_weather(city_model.lat,
-                                                     city_model.lon)
+        weather_data = OpenWeatherMapAPI.get_weather(city_model.lat, city_model.lon)
 
         temp = Temperature(weather_data)
         offset = weather_data['timezone_offset']
@@ -114,9 +111,8 @@ class OpenWeatherMapAPI:
             end_n = 25 - user_time.hour
 
         url = f'https://openweathermap.org/city/{city_model.owm_id}'
-        output = (f'Погода {city_model.local_name} {date_verbose} \\('
-                  f'{user_time.date_repr(True)}\\), '
-                  f'взяв [тут]({url}):\n\n')
+        output = (f'Погода {city_model.local_name} {date_verbose} '
+                  f'\\({user_time.date_repr(True)}\\), взяв [тут]({url}):\n\n')
 
         sunrise = UserTime.from_epoch(weather_data['daily'][date_n]['sunrise'])
         sunset = UserTime.from_epoch(weather_data['daily'][date_n]['sunset'])
@@ -160,8 +156,8 @@ class OpenWeatherMapAPI:
                     output += f'{emoji} {weather} {start.time_repr()}\n'
 
         output += f'\n🌡️ Температура: \(зараз {temp.now}℃\)\n'
-        output += f'{Config.SPACING}мін: {temp.min}℃\n' \
-                  f'{Config.SPACING}макс: {temp.max}℃\n\n'
+        output += (f'{Config.SPACING}мін: {temp.min}℃\n'
+                   f'{Config.SPACING}макс: {temp.max}℃\n\n')
         output += f'😶 Відчувається: \(зараз {temp.feels.now}℃\)\n'
 
         if user_time.hour <= 10:
@@ -169,14 +165,17 @@ class OpenWeatherMapAPI:
         if user_time.hour <= 16:
             output += f'{Config.SPACING}день: {temp.feels.day}℃\n'
         if user_time.hour <= 20:
-            output += f'{Config.SPACING}день: {temp.feels.day}℃\n' \
-                      f'{Config.SPACING}ніч: {temp.feels.night}℃\n\n'
+            output += (f'{Config.SPACING}день: {temp.feels.day}℃\n'
+                       f'{Config.SPACING}ніч: {temp.feels.night}℃\n\n')
 
         output += f'🌀 Швидкість вітру: {wind_speed}м/с\n'
         output += f'💧 Ймовірність опадів: {pop}%\n\n'
         output += (f'🌅 Схід: {sunrise.time_repr()}, '
                    f'🌆 Захід: {sunset.time_repr()}')
 
+        output += ('\n\nДля того, щоб отримувати картинку замість тексту, напиши назву потрібного'
+                   ' міста або надай пряме посилання на потрібне місто на сайті ua.sinoptik.ua,'
+                   ' для налаштування цього обери відповідний пункт у налаштуваннях - /settings')
         return output
 
 
@@ -195,19 +194,16 @@ class SinoptikScraper:
 
 class ScreenshotAPI:
     @staticmethod
-    def get_photo(sinoptik_url: str,
-                  date: str | None = None) -> requests.Response:
+    def get_photo(sinoptik_url: str, date: str | None = None) -> requests.Response:
         if date is not None:
             sinoptik_url = f'{sinoptik_url}/{date}'
 
         sinoptik_url = quote(sinoptik_url)
 
-        url = (
-            f'https://shot.screenshotapi.net/screenshot?token='
-            f'{Config.SCREENSHOT_API_TOKEN}&url={sinoptik_url}&width=1920'
-            f'&height=1080&output=image&file_type=png&block_ads=true&'
-            f'wait_for_event=load&selector=.tabsContentInner'
-        )
+        url = (f'https://shot.screenshotapi.net/screenshot?token='
+               f'{Config.SCREENSHOT_API_TOKEN}&url={sinoptik_url}&width=1920'
+               f'&height=1080&output=image&file_type=png&block_ads=true&'
+               f'wait_for_event=load&selector=.tabsContentInner')
 
         resp = requests.get(url)
 

@@ -14,7 +14,7 @@ from telegram.ext import (MessageHandler,
                           CallbackContext)
 
 from config import Config
-from crud.city import get_city_by_user_id
+from crud.city import get_user_city
 from crud.user import create_or_update_user, get_all_users, update_user
 from handlers import cancel
 from handlers.canel_conversation import cancel_keyboard
@@ -62,7 +62,7 @@ def user_data(update: Update, context: CallbackContext, db):
 
     user_model = create_or_update_user(db, user)
     since = user_model.joined.strftime('%d/%m/%Y')
-    city = get_city_by_user_id(db, user.id)
+    city = get_user_city(db, user.id)
     city = 'Немає інформації' if not city else city[0].name
     crypto_curr = '*, *'.join([crypto.abbr for crypto in user_model.crypto_currency])
     crypto_curr = 'Немає інформації' if not crypto_curr else crypto_curr
