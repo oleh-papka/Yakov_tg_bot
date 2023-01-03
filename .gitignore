@@ -1,4 +1,6 @@
 /.idea/
 /venv/
 *__pycache__/
+/pgdata/
+.env
 /logs.log
