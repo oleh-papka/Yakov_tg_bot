@@ -1,36 +1,46 @@
-import models
+from sqlalchemy.engine import Row
+from sqlalchemy.orm import Session
+
+from models import City, User
 
 
-def get_city_by_name(db, city_name: str) -> models.City | None:
+def get_city(db: Session, city_name: str) -> City | None:
     city_model = db.query(
-        models.City
+        City
     ).filter(
-        models.City.name == city_name
+        City.name == city_name
     ).first()
 
     return city_model
 
 
-def get_city_by_user(db, user_id: int) -> tuple | None:
+def get_user_city(db: Session, user_id: int) -> Row[City, User] | None:
     row = db.query(
-        models.City,
-        models.User
+        City,
+        User
     ).filter(
-        models.User.id == user_id,
-        models.User.city
+        User.id == user_id,
+        User.city
     ).first()
 
     return row
 
 
-def create_city(db, owm_id: int, name: str, lat: float, lon: float, url: str = None,
-                timezone_offset: int = None) -> models.City:
-    city_model = models.City(
+def create_city(db: Session,
+                owm_id: int,
+                name: str,
+                local_name: str,
+                lat: float,
+                lon: float,
+                sinoptik_url: str = None,
+                timezone_offset: int = None) -> City:
+    city_model = City(
         owm_id=owm_id,
         name=name,
+        local_name=local_name,
         lat=lat,
         lon=lon,
-        url=url,
+        sinoptik_url=sinoptik_url,
         timezone_offset=timezone_offset
     )
 

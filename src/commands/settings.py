@@ -1,64 +1,81 @@
 import re
 
-from telegram import ChatAction, InlineKeyboardButton, InlineKeyboardMarkup, Update
-from telegram.ext import ConversationHandler, CallbackQueryHandler, CommandHandler, MessageHandler, Filters, \
-    CallbackContext
+from sqlalchemy.orm import Session
+from telegram import (ChatAction,
+                      InlineKeyboardButton,
+                      InlineKeyboardMarkup,
+                      Update)
+from telegram.ext import (ConversationHandler,
+                          CallbackQueryHandler,
+                          CommandHandler,
+                          MessageHandler,
+                          Filters,
+                          CallbackContext)
 
 from config import Config
-from crud.city import get_city_by_name, get_city_by_user, create_city
-from crud.crypto_currency import get_crypto_by_user, get_crypto_by_abbr
-from crud.currency import get_curr_by_user, get_curr_by_name
-from crud.user import manage_user, get_user, update_user
+from crud import city as city_models
+from crud.crypto_currency import get_crypto_by_user_id, get_crypto_by_abbr
+from crud.currency import get_curr_by_user_id, get_curr_by_name
+from crud.user import create_or_update_user, get_user, update_user
 from handlers.canel_conversation import cancel, cancel_keyboard
+from models.errors import CityFetchError, SinoptikURLFetchError
 from utils.db_utils import create_session
 from utils.message_utils import send_chat_action
-from utils.time_utils import timezone_offset_repr
-from utils.weather_utils import get_city_info, get_sinoptik_url
+from utils.time_utils import UserTime
+from utils.weather_utils import OpenWeatherMapAPI, SinoptikScraper
 
-CONV_START, USER_CITY_CHANGE, USER_CITY_TIMEZONE_CHECK, USER_TIMEZONE_CHANGE, USER_CRYPTO_CHANGE, USER_CURR_CHANGE = 1, 2, 3, 4, 5, 6
+(CONV_START,
+ USER_CITY_CHANGE,
+ USER_CITY_TIMEZONE_CHECK,
+ USER_TIMEZONE_CHANGE,
+ USER_CRYPTO_CHANGE,
+ USER_CURR_CHANGE) = 1, 2, 3, 4, 5, 6
 
 main_settings_keyboard = InlineKeyboardMarkup([
-    [InlineKeyboardButton('Змінити місто 🏙️', callback_data='city')],
-    [InlineKeyboardButton('Змінити часовий пояс 🌐', callback_data='timezone')],
-    [InlineKeyboardButton('Змінити крипто валюти 🪙', callback_data='crypto')],
-    [InlineKeyboardButton('Змінити валюти 🇺🇦', callback_data='curr')],
+    [InlineKeyboardButton('Місто 🏙️', callback_data='city')],
+    [InlineKeyboardButton('Часовий пояс 🌐', callback_data='timezone')],
+    [InlineKeyboardButton('Крипто валюти 🪙', callback_data='crypto')],
+    [InlineKeyboardButton('Фіатні валюти 🇺🇦', callback_data='curr')],
     [InlineKeyboardButton('🚫 Відмінити', callback_data='cancel')]
 ], )
 
 
 @create_session
 @send_chat_action(ChatAction.TYPING)
-def settings(update: Update, context: CallbackContext, db):
+def settings(update: Update, context: CallbackContext, db: Session):
     message = update.message
     user = message.from_user
     context.user_data['cancel_reply_msg_id'] = message.message_id
 
-    manage_user(db, user)
+    create_or_update_user(db, user)
 
     context.user_data['cancel_reply_message'] = message.message_id
     context.user_data['cancel_reply_markup_msg'] = message.reply_text(
-        'Бажаєш змінити щось?\nОбери з нижче наведених опцій:', reply_markup=main_settings_keyboard)
+        'Бажаєш налаштувати щось?\nОбери з нижче наведених опцій:', reply_markup=main_settings_keyboard)
 
     return CONV_START
 
 
 @create_session
-def user_city_check(update: Update, context: CallbackContext, db):
+def user_city_check(update: Update, context: CallbackContext, db: Session):
     query = update.callback_query
+    user = update.effective_user
     message = query.message
     query.answer()
 
     msg = '🆗 Обрано зміну міста для прогнозу погоди.\n\n'
 
-    if row := get_city_by_user(db, query.from_user.id):
+    if row := city_models.get_user_city(db, user.id):
         city_model, user_model = row[0], row[1]
-        msg += f'⚠ В тебе уже вказане місто - {city_model.name}. Ти справді хочеш його змінити?\n\n' \
-               f'Для зміни надішли назву міста у наступному повідомленні.'
+        msg += (f'⚠ В тебе уже вказане місто - {city_model.name}. Ти справді хочеш його змінити?\n\n'
+                'Для зміни надішли назву міста або пряме посилання на нього '
+                'з ua.sinoptik.ua у наступному повідомленні.')
     else:
-        msg += 'Надішли мені назву міста у наступному повідомленні, щоб встановити відповідне.'
+        msg += ('Надішли мені назву міста або пряме посилання на нього з ua.sinoptik.ua '
+                'у наступному повідомленні, щоб встановити відповідне.')
 
-    msg += '\n\nP.S. Будь ласка вказуй назву міста українською мовою, якщо можливо, ' \
-           'я не досконало знаю англійську, тому можуть виникати проблеми...'
+    msg += ('\n\nP.S. Якщо виникають проблеми - спробуй вказати місто українською, '
+            'або ж спробуй через посилання, у зворотньому випадку напиши про це розробнику - /feedback')
 
     context.user_data['msg_with_markup'] = message.edit_text(text=msg, reply_markup=cancel_keyboard)
 
@@ -67,45 +84,44 @@ def user_city_check(update: Update, context: CallbackContext, db):
 
 @create_session
 @send_chat_action(ChatAction.TYPING)
-def user_city_change(update: Update, context: CallbackContext, db):
+def user_city_change(update: Update, context: CallbackContext, db: Session):
     message = update.message
+    user = update.effective_user
     msg_with_markup = context.user_data['msg_with_markup']
     context.user_data['cancel_reply_msg_id'] = message.message_id
-
-    err_msg = '⚠ Cхоже назва міста вказана не вірно, я не можу занйти такого міста, спробуй ще раз.'
-    warning_msg = '\n\n⚠ Hey, you wrote city name not in Cyrillic, ' \
-                  'so I cannot return weather picture on /weather command.\n\n' \
-                  'Я ж просив писати українською, тепер тобі доведеться ' \
-                  'бачити лиш текст замість красивої картинки. Сподіваюсь це тебе влаштує,' \
-                  'для того, щоб змінити місто достатньо обрати відповідний пункт в команді /settings'
 
     msg_with_markup.edit_reply_markup()
     user_input = message.text.strip().capitalize()
 
-    if re.search(r'\d|[.^$*+?\[\](){}\\,/!@#%&|~`\'\";:_=<>]', user_input) or len(user_input) > 20:
-        context.user_data['msg_with_markup'] = message.reply_text(err_msg, reply_markup=cancel_keyboard)
+    wrong_symbols_error_msg = '⚠ Глузуєш? Бо, я щось глибоко сумніваюсь, що є таке місто...'
+    if re.search(r'\d|[.^$*+?\[\](){}\\,/!@#%&|~`\'\";:_=<>]', user_input) or len(user_input) > 25:
+        context.user_data['msg_with_markup'] = message.reply_text(wrong_symbols_error_msg, reply_markup=cancel_keyboard)
         return USER_CITY_CHANGE
 
-    user_model = get_user(db, message.from_user.id)
-    city_data = get_city_info(user_input)
-
-    if not city_data:
-        context.user_data['msg_with_markup'] = message.reply_text(err_msg, reply_markup=cancel_keyboard)
+    try:
+        city_data = OpenWeatherMapAPI.get_city(user_input)
+    except CityFetchError:
+        city_not_found_error_msg = '⚠ Cхоже назва міста вказана не вірно(або я дурний), бо не можу занйти такого міста.'
+        context.user_data['msg_with_markup'] = message.reply_text(city_not_found_error_msg,
+                                                                  reply_markup=cancel_keyboard)
         return USER_CITY_CHANGE
 
+    user_model = get_user(db, user.id)
+
+    city_name_local = city_data['local_name']
     city_name_eng = city_data['name']
-    msg = f'✅ Зроблено, твоє місто тепер - {city_name_eng}.'
-    city_model = get_city_by_name(db, city_name_eng)
+    msg = f'✅ Зроблено, твоє місто тепер - {city_name_local}.'
 
-    if city_model:
+    if city_model := city_models.get_city(db, city_name_eng):
         if city_model.name == user_model.city[0].name:
             msg = '❕ Так це ж те саме місто, жодних змін не вношу 🙃\n\n Потрібно змінити ще щось?'
 
-        if not city_model.url:
-            if url := get_sinoptik_url(user_input):
-                city_model.url = url
-            else:
-                msg += warning_msg
+        if not city_model.sinoptik_url:
+            try:
+                url = SinoptikScraper.get_url(city_name_local)
+                city_model.sinoptik_url = url
+            except SinoptikURLFetchError:
+                msg += '\n\nНе вдалось додати дані з ua.sinoptik.ua!'
 
         user_model.city = [city_model]
         db.commit()
@@ -113,17 +129,15 @@ def user_city_change(update: Update, context: CallbackContext, db):
         message.reply_text(msg, reply_markup=main_settings_keyboard)
         return CONV_START
     else:
-        sinoptik_base_url = get_sinoptik_url(user_input)
-        city_model = create_city(db,
-                                 owm_id=city_data['id'],
-                                 name=city_name_eng,
-                                 lat=city_data['lat'],
-                                 lon=city_data['lon'],
-                                 url=sinoptik_base_url,
-                                 timezone_offset=city_data['timezone_offset'])
-
-        if not city_model.url:
-            msg += warning_msg
+        sinoptik_base_url = SinoptikScraper.get_url(city_name_local)
+        city_model = city_models.create_city(db,
+                                             owm_id=city_data['id'],
+                                             name=city_name_eng,
+                                             local_name=city_name_local,
+                                             lat=city_data['lat'],
+                                             lon=city_data['lon'],
+                                             sinoptik_url=sinoptik_base_url,
+                                             timezone_offset=city_data['timezone_offset'])
 
         user_model.city = [city_model]
         db.commit()
@@ -134,7 +148,7 @@ def user_city_change(update: Update, context: CallbackContext, db):
     if city_timezone_offset and (city_timezone_offset != user_model.timezone_offset):
         msg += '\n\n❕ У тебе і цього міста різні часові пояси, змінити на відповідний місту часовий пояс?'
         approve_keyboard = InlineKeyboardMarkup([
-            [InlineKeyboardButton(f'Змінити на "{timezone_offset_repr(city_timezone_offset)}"',
+            [InlineKeyboardButton(f'Змінити на "{UserTime.offset_repr(city_timezone_offset)}"',
                                   callback_data='change_to_city')],
             [InlineKeyboardButton('Детальні налаштування 🌐', callback_data='change')],
             [InlineKeyboardButton('🚫 Відмінити', callback_data='cancel')]
@@ -163,7 +177,7 @@ def change_timezone_to_city(update: Update, context: CallbackContext, db):
     update_user(db, user, user_data)
 
     msg = f'✅ Зроблено, твій часовий пояс тепер відповідає вказаному місту ' \
-          f'{city_model.name} ({timezone_offset_repr(city_model.timezone_offset)}).'
+          f'{city_model.name} ({UserTime.offset_repr(city_model.timezone_offset)}).'
     query.edit_message_text(text=msg, reply_markup=None)
 
     context.user_data.clear()
@@ -179,15 +193,15 @@ def user_timezone_check(update: Update, context: CallbackContext, db):
     context.user_data['cancel_reply_msg_id'] = message.message_id
     context.user_data['cancel_reply_markup_msg_id'] = message.message_id
 
-    row = get_city_by_user(db, query.from_user.id)
+    row = city_models.get_user_city(db, query.from_user.id)
     city_model, user_model = row[0], row[1]
 
     msg = '🆗 Обрано зміну часового поясу.\n\n' \
           'Поточні дані часового поясу:\n'
     if city_model:
-        msg += f'{Config.SPACING}У місті {city_model.name}: {timezone_offset_repr(city_model.timezone_offset)}\n'
+        msg += f'{Config.SPACING}У місті {city_model.name}: {UserTime.offset_repr(city_model.timezone_offset)}\n'
 
-    msg += f'{Config.SPACING}Вказаний в профілі: {timezone_offset_repr(user_model.timezone_offset)}\n\n' \
+    msg += f'{Config.SPACING}Вказаний в профілі: {UserTime.offset_repr(user_model.timezone_offset)}\n\n' \
            f'Для зміни часового поясу надішли відповідний у наступному повідомленні (Приклад: +3).'
 
     message.edit_text(text=msg, reply_markup=cancel_keyboard)
@@ -215,7 +229,7 @@ def user_timezone_change(update: Update, context: CallbackContext, db):
     context.user_data['cancel_reply_msg_id'] = message.message_id
     update_user(db, user, {'timezone_offset': timezone_offset})
 
-    msg = f'✅ Зроблено, твій часовий пояс тепер {timezone_offset_repr(timezone_offset)}'
+    msg = f'✅ Зроблено, твій часовий пояс тепер {UserTime.offset_repr(timezone_offset)}'
     message.reply_text(text=msg, reply_markup=None)
 
     context.user_data.clear()
@@ -258,7 +272,7 @@ def user_crypto_check(update: Update, context: CallbackContext, db):
 
     msg = '🆗 Обрано зміну криптовалют.\n\nМенеджемент криптою можеш проводити нижче, щоб відстежувати відповідну.'
 
-    if crypto_models := get_crypto_by_user(db, update.effective_user.id):
+    if crypto_models := get_crypto_by_user_id(db, update.effective_user.id):
         data = [model.abbr for model in crypto_models]
     else:
         data = []
@@ -330,7 +344,7 @@ def user_curr_check(update: Update, context: CallbackContext, db):
 
     msg = '🆗 Обрано зміну валют.\n\nМенеджемент валютами можеш проводити нижче, щоб відстежувати відповідну.'
 
-    if curr_models := get_curr_by_user(db, update.effective_user.id):
+    if curr_models := get_curr_by_user_id(db, update.effective_user.id):
         data = [model.name for model in curr_models]
     else:
         data = []

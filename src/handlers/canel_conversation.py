@@ -1,6 +1,9 @@
 import logging
 
-from telegram import Update, ChatAction, InlineKeyboardMarkup, InlineKeyboardButton
+from telegram import (Update,
+                      ChatAction,
+                      InlineKeyboardMarkup,
+                      InlineKeyboardButton)
 from telegram.ext import ConversationHandler, CallbackContext
 
 from utils.message_utils import send_chat_action

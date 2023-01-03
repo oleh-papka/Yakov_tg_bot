@@ -1,8 +1,16 @@
-from telegram import LabeledPrice, Update, ParseMode, ChatAction, MessageEntity
-from telegram.ext import CommandHandler, PreCheckoutQueryHandler, MessageHandler, Filters, CallbackContext
+from telegram import (LabeledPrice,
+                      Update,
+                      ParseMode,
+                      ChatAction,
+                      MessageEntity)
+from telegram.ext import (CommandHandler,
+                          PreCheckoutQueryHandler,
+                          MessageHandler,
+                          Filters,
+                          CallbackContext)
 
 from config import Config
-from crud.user import manage_user
+from crud.user import create_or_update_user
 from utils.db_utils import create_session
 from utils.message_utils import send_chat_action, escape_str_md2
 
@@ -12,7 +20,7 @@ from utils.message_utils import send_chat_action, escape_str_md2
 def tip_developer(update: Update, context: CallbackContext, db):
     chat_id = update.message.chat_id
     user = update.effective_user
-    manage_user(db, user)
+    create_or_update_user(db, user)
 
     title = 'Купити смаколиків розробнику'
     description = 'Я старався'
@@ -35,7 +43,9 @@ def tip_developer(update: Update, context: CallbackContext, db):
         max_tip_amount=max_tip_amount,
         suggested_tip_amounts=suggested_tip_amounts,
         start_parameter='tip_developer',
-        photo_url='https://images.unsplash.com/photo-1588339721875-709c2135fc49?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=687&q=80',
+        photo_url=('https://images.unsplash.com/photo-1588339721875-709c2135'
+                   'fc49?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8'
+                   'fGVufDB8fHx8&auto=format&fit=crop&w=687&q=80'),
         photo_size='1000',
         photo_height=400,
         photo_width=400
@@ -57,8 +67,8 @@ def successful_payment(update: Update, context: CallbackContext):
     message = update.message
     payment = message.successful_payment
     user = message.from_user
-    msg = f'Не повіриш! Добра душа [{user.first_name}](tg://user?id={user.id}) ' \
-          f'передала тобі пару гривників \({payment.total_amount / 100:g} {payment.currency}\)!'
+    msg = (f'Не повіриш! Добра душа [{user.first_name}](tg://user?id={user.id}) '
+           f'передала тобі пару гривників \({payment.total_amount / 100:g} {payment.currency}\)!')
 
     message.reply_text("✅ Чотенько, дякую за грошенятка!")
     context.bot.send_message(Config.OWNER_ID, escape_str_md2(msg, exclude=MessageEntity.TEXT_LINK),

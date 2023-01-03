@@ -2,6 +2,8 @@ from datetime import datetime, timezone, timedelta
 
 
 class UserTime(datetime):
+    # TODO: refactor class (minimize static methods)
+    #  integrate class usage more
 
     def __new__(cls, *args, **kwargs):
         if offset := kwargs.get('offset'):
@@ -36,8 +38,9 @@ class UserTime(datetime):
 
     def date_repr(self, style_flag: None | bool = None) -> str:
         """Returns date in 'YYYY-MM-DD' format"""
+        # TODO: add custom separator
         if style_flag:
-            resp = self.dt.strftime('%d/%m/%Y')
+            resp = self.dt.strftime('%d.%m.%Y')
         else:
             resp = self.dt.strftime('%Y-%m-%d')
         return resp
@@ -68,33 +71,31 @@ class UserTime(datetime):
         return cls(datetime.utcfromtimestamp(epoch + offset))
 
     @staticmethod
-    def offset_repr(offset: int) -> str:
-        """Returns timezone offset in '+/d' format"""
-        timezone_offset = int(offset / 3600)
+    def get_time_from_offset(offset: int) -> dict:
+        """Return basic datetime objects from offset."""
+        dt = datetime.now(timezone.utc) + timedelta(seconds=offset)
+        time = dt.strftime('%H:%M')
+        date = dt.strftime('%Y-%m-%d')
+        date_time = dt.strftime('%H:%M %d-%m-%Y')
+        tomorrow_dt = dt + timedelta(days=1)
+        tomorrow = tomorrow_dt.strftime('%Y-%m-%d')
+
+        return {
+            'time': time,
+            'date': date,
+            'date_time': date_time,
+            'dt': dt,
+            'tomorrow': tomorrow
+        }
+
+    @staticmethod
+    def format_unix_time(time_unix: int, time_offset: int) -> str:
+        """Format unix time to human-readable (HH:MM) format"""
+        dt = datetime.utcfromtimestamp(time_unix + time_offset)
+        return dt.strftime('%H:%M')
+
+    @staticmethod
+    def offset_repr(timezone_offset: int | str) -> str:
+        """Format timezone offset to sign-digit('+/d') format"""
+        timezone_offset = int(int(timezone_offset) / 3600)
         return f'{timezone_offset:+d}'
-
-
-def get_time_from_offset(offset: int) -> dict:
-    dt = datetime.now(timezone.utc) + timedelta(seconds=offset)
-    time = dt.strftime('%H:%M')
-    date = dt.strftime('%Y-%m-%d')
-    date_time = dt.strftime('%H:%M %d-%m-%Y')
-    tomorrow_dt = dt + timedelta(days=1)
-    tomorrow = tomorrow_dt.strftime('%Y-%m-%d')
-
-    return {
-        'time': time,
-        'date': date,
-        'date_time': date_time,
-        'dt': dt,
-        'tomorrow': tomorrow
-    }
-
-
-def format_unix_time(time_unix: int, time_offset: int) -> str:
-    return datetime.utcfromtimestamp(time_unix + time_offset).strftime('%H:%M')
-
-
-def timezone_offset_repr(timezone_offset: int | str) -> str:
-    timezone_offset = int(timezone_offset / 3600)
-    return f'{timezone_offset:+d}'

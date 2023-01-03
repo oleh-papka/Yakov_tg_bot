@@ -1,31 +1,34 @@
+from sqlalchemy.orm import Session
+
 import models
+from models import Feedback
 
 
-def get_feedback_by_msg_id(db, msg_id: int) -> models.Feedback:
+def get_feedback_by_msg_id(db: Session, msg_id: int) -> Feedback:
     feedback = db.query(
-        models.Feedback
+        Feedback
     ).filter(
-        models.Feedback.msg_id == msg_id
+        Feedback.msg_id == msg_id
     ).first()
 
     return feedback
 
 
-def get_feedback_by_user(db, user_id: int) -> models.Feedback:
+def get_feedback_by_user_id(db: Session, user_id: int) -> list:
     feedbacks = db.query(
-        models.Feedback
+        Feedback
     ).filter(
-        models.Feedback.user_id == user_id
+        Feedback.user_id == user_id
     ).all()
 
     return feedbacks
 
 
-def mark_read(db, msg_id: int) -> None:
+def mark_feedback_read(db: Session, msg_id: int) -> None:
     feedback = db.query(
-        models.Feedback
+        Feedback
     ).filter(
-        models.Feedback.msg_id == msg_id
+        Feedback.msg_id == msg_id
     ).first()
 
     feedback.read_flag = True

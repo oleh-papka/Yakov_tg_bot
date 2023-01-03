@@ -1,4 +1,5 @@
 import logging
+import os
 
 from telegram.ext import Updater
 
@@ -23,6 +24,7 @@ from handlers import (
     unknown_handler,
     days_passed_handler
 )
+from utils.initial_check_utils import check_db_connection, check_db_tables
 
 logger = logging.getLogger(__name__)
 
@@ -46,12 +48,29 @@ def main() -> None:
     disp.add_handler(feedback_handler)
     disp.add_handler(feedback_reply_handler)
 
-    disp.add_handler(days_passed_handler)   # Text regex handlers
-    disp.add_handler(unknown_handler)   # Unknown messages handler
+    # Text regex handlers
+    disp.add_handler(days_passed_handler)
+    disp.add_handler(unknown_handler)
 
-    disp.add_error_handler(error_handler)   # Error handler
+    disp.add_error_handler(error_handler)  # Error handler
 
     bot.set_my_commands(Config.BOT_COMMANDS)
+
+    if not check_db_connection():
+        logger.critical("DB not found!")
+        exit()
+
+    if not check_db_tables():
+        logger.warning("Tables not found!")
+
+        logger.info("Creating tables manually...")
+        os.system("python3 src/setup.py")
+
+        if check_db_tables():
+            logger.info("Tables are all set up!")
+        else:
+            logger.critical("Could not create tables!")
+            exit()
 
     if Config.WEBHOOK_FLAG:
         logger.info(f'Starting bot at {Config.BOT_LINK}')

@@ -2,13 +2,14 @@ import logging
 
 import telegram
 from sqlalchemy import update
+from sqlalchemy.orm import Session
 
 import models
 
 logger = logging.getLogger(__name__)
 
 
-def get_user(db, user_id: int) -> models.User:
+def get_user(db: Session, user_id: int) -> models.User:
     """Retrieve user by user_id"""
     user = db.query(
         models.User
@@ -19,7 +20,7 @@ def get_user(db, user_id: int) -> models.User:
     return user
 
 
-def get_all_users(db, active_flag: None | bool = None) -> list:
+def get_all_users(db: Session, active_flag: None | bool = None) -> list:
     """Retrieve all users from db"""
     if active_flag:
         users = db.query(
@@ -35,7 +36,7 @@ def get_all_users(db, active_flag: None | bool = None) -> list:
     return users
 
 
-def create_user(db, user: telegram.User) -> models.User:
+def create_user(db: Session, user: telegram.User) -> models.User:
     """Creates user in db"""
     user_model = models.User(
         id=user.id,
@@ -51,7 +52,7 @@ def create_user(db, user: telegram.User) -> models.User:
     return user_model
 
 
-def update_user(db, user: telegram.User, user_data: dict) -> None:
+def update_user(db: Session, user: telegram.User, user_data: dict) -> None:
     """Update specific parameter for user"""
     update_query = update(
         models.User
@@ -68,7 +69,8 @@ def update_user(db, user: telegram.User, user_data: dict) -> None:
     logger.debug(f'Changed: {changes} for user {user.name} (id:{user.id})')
 
 
-def auto_update_user(db, user: telegram.User, user_model: models.User) -> None:
+def user_update_multiple(db: Session,
+                         user: telegram.User, user_model: models.User) -> None:
     """Update user if needed according to telegram.User object"""
     user_data = {}
 
@@ -89,10 +91,10 @@ def auto_update_user(db, user: telegram.User, user_model: models.User) -> None:
         logger.debug(f'Nothing to change for user {user.name} (id:{user.id})')
 
 
-def manage_user(db, user: telegram.User) -> models.User:
-    """Create new user or update its data if needed"""
+def create_or_update_user(db: Session, user: telegram.User) -> models.User:
+    """Create new user or update user info if needed"""
     if user_model := get_user(db, user.id):
-        auto_update_user(db, user, user_model)
+        user_update_multiple(db, user, user_model)
     else:
         user_model = create_user(db, user)
 

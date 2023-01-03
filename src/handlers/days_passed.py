@@ -2,11 +2,12 @@ import re
 from datetime import datetime
 
 from dateutil import relativedelta
+from sqlalchemy.orm import Session
 from telegram import Update, ChatAction
 from telegram.ext import CallbackContext, MessageHandler, Filters
 
 from config import Config
-from crud.user import manage_user
+from crud.user import create_or_update_user
 from utils.db_utils import create_session
 from utils.message_utils import send_chat_action
 
@@ -93,11 +94,11 @@ def compose_passed_days_msg(data: tuple, desc: str | None = None) -> str:
 
 @create_session
 @send_chat_action(ChatAction.TYPING)
-def days_passed(update: Update, context: CallbackContext, db):
+def days_passed(update: Update, context: CallbackContext, db: Session):
     message = update.message
     user = update.effective_user
     text = message.text
-    manage_user(db, user)
+    create_or_update_user(db, user)
 
     parsed_date = parse_date(text)
     msg = compose_passed_days_msg(data=calc_date_diff(*parsed_date))
