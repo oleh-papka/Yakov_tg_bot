@@ -5,6 +5,8 @@ from sqlalchemy.orm import sessionmaker
 
 import models
 
+os.system("alembic upgrade head")
+
 crypto_models = [
     models.CryptoCurrency(id=1, name='Bitcoin', abbr='BTC'),
     models.CryptoCurrency(id=1027, name='Ethereum', abbr='ETH'),

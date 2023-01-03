@@ -36,7 +36,7 @@ class Config:
 
     SPACING = '⠀⠀  '  # Main whitespace characters used in formatting
 
-    BOT_VERSION = 'v0.0.3'
+    BOT_VERSION = 'v0.0.4'
 
     BOT_COMMANDS = [
         ('weather', 'Погода'),
@@ -55,8 +55,7 @@ class Config:
         format='%(asctime)s | %(name)s | %(levelname)s | %(message)s',
         level=logging_lvl,
         handlers=[
-            logging.FileHandler(os.path.join(os.getcwd(), 'logs.log'),
-                                encoding="utf-8"),
+            logging.FileHandler(os.path.join(os.getcwd(), 'logs.log'), encoding="utf-8"),
             logging.StreamHandler()
         ]
     )
