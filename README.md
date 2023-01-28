@@ -2,7 +2,7 @@
 
 This is simple Telegram helper bot, made for simplifying some daily routines.
 
-New features will be added soon...
+New features will be added soon... (actually transition to new version of library)
 
 
 ## Setup bot
@@ -12,13 +12,12 @@ New features will be added soon...
 - PostgreSQL database (hypothetically you could use any other, but I'm not 100% shure)
 - Python 3.10+ (haven't checked lower versions, but why to use them?)
 - And external libraries could be found in [`requirements.txt`](./requirements.txt) 
-(⚠️ used outdated version of `python-telegram-bot` library, new version wold be supported in future releases)
+(⚠️ used outdated version of `python-telegram-bot` library, new version would be supported in future releases)
 
 
 ### Bot config
 
-Environmental variables example template could be found in [`.env.example`](./.env.example)
-file.  
+Environmental variables example template could be found in [`.env.example`](./.env.example) file.  
 Set `WEBHOOK_FLAG` to `1` for running on Heroku (also need to specify `BOT_LINK` and `PORT` if so) and `0` for running locally.
 
 
@@ -36,9 +35,9 @@ $ py ./src/setup.py
 OR
 
 ```bash
-$ docker-compose up   # If you want to use with Docker 
+$ docker-compose up   # If you want to use via Docker 
 ```
 
 ## Development
 
-Before starting read the [`CONTRIBUTING.md`](./CONTRIBUTING.md) file.
+Before starting your contribution read the [`CONTRIBUTING.md`](./CONTRIBUTING.md) file.
