@@ -8,11 +8,11 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       PGDATA: "/var/lib/postgresql/data/pgdata"
     volumes:
-      - .:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "sh -c 'pg_isready -U ${DB_USER} -d ${DB_NAME}'"]
+      test: [ "CMD-SHELL", "sh -c 'pg_isready -U ${DB_USER} -d ${DB_NAME}'" ]
       interval: 5s
       timeout: 10s
       retries: 5
@@ -21,6 +21,21 @@ services:
 
   tg-bot:
     build: .
+    environment:
+      DEBUG_FLAG: ${DEBUG_FLAG}
+      BOT_TOKEN: ${BOT_TOKEN}
+      OWNER_ID: ${OWNER_ID}
+      TESTER_ID: ${TESTER_ID}
+      CMC_API_TOKEN: ${CMC_API_TOKEN}
+      SCREENSHOT_API_TOKEN: ${SCREENSHOT_API_TOKEN}
+      OWM_API_TOKEN: ${OWM_API_TOKEN}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_PORT: ${DB_PORT}
+      DB_NAME: ${DB_NAME}
+      DB_URL: postgresql://${DB_USER}:${DB_PASSWORD}@postgres:${DB_PORT}/${DB_NAME}  # Note: as host used container
+      WEBHOOK_FLAG: ${WEBHOOK_FLAG}
+
     depends_on:
       postgres:
         condition: service_healthy
@@ -28,6 +43,9 @@ services:
       - backend
     links:
       - postgres
+
+volumes:
+  postgres_data:
 
 networks:
   backend:
