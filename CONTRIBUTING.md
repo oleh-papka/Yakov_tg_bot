@@ -8,11 +8,12 @@ After approvement you could make a pull request.
 
 Please try to stay as close as possible to this format:
 
-| Prefix   | Meaning                 |
-|----------|-------------------------|
-| Add      | New functionality added |
-| Change   | Changed something       |
-| Remove   | Removed something       |
-| Fix      | Provided fix of a bug   |
-| Test     | Testing related changes |
-| Refactor | For refactor changes    |
+| Prefix   | Meaning                        |
+|----------|--------------------------------|
+| Add      | New functionality added        |
+| Update   | Updated something              |
+| Change   | Changed something to something |
+| Remove   | Removed something              |
+| Fix      | Provided fix of a bug          |
+| Test     | Testing related changes        |
+| Refactor | For refactor changes           |
