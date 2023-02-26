@@ -1,31 +1,18 @@
-from loguru import logger
-
 from telegram import Update
 from telegram.constants import ParseMode
 from telegram.ext import CommandHandler, ContextTypes
 
-from src.models import User
+from src.crud.user import create_or_update_user
 from src.utils import escape_md2_no_links
 from src.utils.db_utils import get_session
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    logger.success("Start command")
     user = update.effective_user
 
     # Create a new user instance and add it to the database
     async with get_session() as session:
-        user_model = User(
-            id=user.id,
-            username=user.username,
-            first_name=user.first_name,
-            last_name=user.last_name,
-            language_code=user.language_code
-        )
-        session.add(user_model)
-        await session.commit()
-
-    logger.success(f"Added new user: {user.name}")
+        await create_or_update_user(session, user)
 
     msg = (f"Привіт {user.first_name}, я Yakov і створений тому, що моєму [розробнику]"
            "(tg://user?id={Config.CREATOR_ID}) було нудно.\nЯ постійно отримую апдейти "
