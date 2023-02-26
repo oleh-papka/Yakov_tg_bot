@@ -9,7 +9,8 @@ from src import models
 async def get_user(session: AsyncSession, user_id: int) -> models.User:
     """Retrieve user by user_id"""
 
-    result = await session.execute(select(models.User).where(models.User.id == user_id))
+    query = select(models.User).where(models.User.id == user_id)
+    result = await session.execute(query)
     user = result.scalars().first()
 
     return user
@@ -18,16 +19,18 @@ async def get_user(session: AsyncSession, user_id: int) -> models.User:
 async def get_all_users(session: AsyncSession, active_flag: None | bool = None):
     """Retrieve all users from session"""
 
+    base_query = select(models.User)
+
     if active_flag:
-        users = await session.execute(select(models.User).where(models.User.active == True))
+        users = await session.execute(base_query.where(models.User.active == True))
     else:
-        users = await session.execute(select(models.User))
+        users = await session.execute(base_query)
 
     return users.scalars().all()
 
 
 async def create_user(session: AsyncSession, user: telegram.User) -> models.User:
-    """Creates user in session"""
+    """Create user from telegram User object"""
 
     user_model = models.User(
         id=user.id,
