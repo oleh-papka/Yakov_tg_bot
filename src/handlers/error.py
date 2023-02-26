@@ -24,6 +24,8 @@ async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> N
         tb_string = "...\n" + tb_string[-err_msg_len:].strip()
 
     update_str = update.to_dict() if isinstance(update, Update) else str(update)
+
+    # Inform developer
     msg = (
         f"⚠ Ситуація\n\n"
         f"<pre>update = {html.escape(json.dumps(update_str, indent=2, ensure_ascii=False))}</pre>"
@@ -38,5 +40,7 @@ async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> N
     await context.bot.send_message(chat_id=Config.OWNER_ID, text=msg2, parse_mode=ParseMode.HTML)
     await context.bot.send_message(chat_id=Config.OWNER_ID, text=msg3, parse_mode=ParseMode.HTML)
 
+    # Inform user
     msg = 'Перепрошую, щось пішло не так. Я уже повідомив розробника.\n\nПідказка - /help'
+
     await update.message.reply_text(msg, quote=True)
