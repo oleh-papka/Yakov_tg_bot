@@ -4,7 +4,7 @@ from sqlalchemy import Column, ForeignKey
 from sqlalchemy.dialects.postgresql import INTEGER, TEXT, TIMESTAMP, BOOLEAN
 from sqlalchemy.orm import relationship
 
-from models.base import Base
+from ..base import Base
 
 
 class Feedback(Base):

@@ -1,14 +1,15 @@
-from sqlalchemy import Column
+from sqlalchemy import Column, ForeignKey
 from sqlalchemy.dialects.postgresql import INTEGER, VARCHAR, REAL, TEXT
 from sqlalchemy.orm import relationship
 
-from models.base import Base
+from ..base import Base
 
 
 class City(Base):
     __tablename__ = 'city'
 
     id = Column(INTEGER, primary_key=True, autoincrement=True)
+    user_id = Column(INTEGER, ForeignKey('user.id'), nullable=False)
     owm_id = Column(INTEGER, nullable=False)
     name = Column(VARCHAR(50), nullable=False)
     local_name = Column(VARCHAR(50), nullable=True)
@@ -17,4 +18,4 @@ class City(Base):
     sinoptik_url = Column(TEXT, nullable=True)
     timezone_offset = Column(INTEGER, nullable=True)
 
-    user = relationship('User', secondary='user_city')
+    user = relationship('User')
