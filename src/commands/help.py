@@ -7,18 +7,18 @@ from src.utils import escape_md2_no_links
 
 
 def _compose_help_message() -> str:
-    msg = "Я Yakov, персональний асистент, а ось команди, які я знаю:\n\n"
+    help_message_text = ("Я Yakov, персональний асистент, а ось команди, які я знаю:\n\n"
+                         "/start - Привітулька від бота\n")
 
-    msg += f'/start - Привітулька від бота\n'
     for command, description in Config.BOT_COMMANDS:
-        msg += f'/{command} - {description}\n'
+        help_message_text += f"/{command} - {description}\n"
 
-    msg += (f"\nБот створений [цим](tg://user?id={Config.CREATOR_ID}) розробником,\n"
-            f"за допомогою [python-telegram-bot](https://python-telegram-bot.org/).\n"
-            f"Код проекту на GitHub [Yakov_tg_bot](https://github.com/OlegPapka2/Yakov_tg_bot)\n\n"
-            f"Поточна версія бота: {Config.BOT_VERSION}")
+    help_message_text += (f"\nБот створений [цим](tg://user?id={Config.CREATOR_ID}) розробником,\n"
+                          f"за допомогою [python-telegram-bot](https://python-telegram-bot.org/).\n"
+                          f"Код проекту на GitHub [Yakov_tg_bot](https://github.com/OlegPapka2/Yakov_tg_bot)\n\n"
+                          f"Поточна версія бота: {Config.BOT_VERSION}")
 
-    return msg
+    return help_message_text
 
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:

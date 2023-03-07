@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src import models
 
 
-async def get_user(session: AsyncSession, user_id: int) -> models.User:
+async def get_user_by_id(session: AsyncSession, user_id: int) -> models.User:
     """Retrieve user by user_id"""
 
     query = select(models.User).where(models.User.id == user_id)
@@ -87,7 +87,7 @@ async def user_update_multiple(session: AsyncSession,
 async def create_or_update_user(session: AsyncSession, user: telegram.User) -> models.User:
     """Create new user or update user info if needed"""
 
-    if user_model := await get_user(session, user.id):
+    if user_model := await get_user_by_id(session, user.id):
         await user_update_multiple(session, user, user_model)
     else:
         user_model = await create_user(session, user)

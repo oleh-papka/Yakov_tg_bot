@@ -1,8 +1,8 @@
-"""init
+"""initial_table_creation
 
-Revision ID: 23da2158d4a7
+Revision ID: 0001
 Revises: 
-Create Date: 2023-02-26 16:17:12.763980
+Create Date: 2023-03-05 18:52:51.348523
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision = '23da2158d4a7'
+revision = '0001'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -50,6 +50,8 @@ def upgrade() -> None:
     sa.Column('language_code', sa.VARCHAR(length=2), nullable=False),
     sa.Column('timezone_offset', sa.INTEGER(), nullable=True),
     sa.Column('active', sa.BOOLEAN(), nullable=False),
+    sa.Column('city_id', sa.INTEGER(), nullable=True),
+    sa.ForeignKeyConstraint(['city_id'], ['city.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('crypto_currency_watchlist',

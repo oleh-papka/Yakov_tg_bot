@@ -43,4 +43,10 @@ async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> N
     # Inform user
     msg = 'Перепрошую, щось пішло не так. Я уже повідомив розробника.\n\nПідказка - /help'
 
-    await update.message.reply_text(msg, quote=True)
+    if update.callback_query:
+        query = update.callback_query
+        message = query.message
+    else:
+        message = update.message
+
+    await message.reply_text(msg, quote=True)

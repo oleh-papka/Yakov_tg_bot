@@ -1,41 +1,28 @@
 import logging
 
 from telegram import (Update,
-                      ChatAction,
                       InlineKeyboardMarkup,
-                      InlineKeyboardButton)
-from telegram.ext import ConversationHandler, CallbackContext
-
-from utils.message_utils import send_chat_action
+                      InlineKeyboardButton, Message)
+from telegram.ext import ConversationHandler, ContextTypes
 
 cancel_keyboard = InlineKeyboardMarkup([[InlineKeyboardButton('🚫 Відмінити', callback_data='cancel')]])
 logger = logging.getLogger(__name__)
 
 
-@send_chat_action(ChatAction.TYPING)
-def cancel(update: Update, context: CallbackContext):
-    CONVERSATION_CANCELED = '🚫 Попередній діалог завершено.'
+async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    conversation_canceled_message_text = '🚫 Попередній діалог завершено.'
 
     if update.callback_query:
         query = update.callback_query
         message = query.message
-        user_id = message.chat.id
-
-        query.answer()
-        message.edit_reply_markup(reply_markup=None)
-
-        logger.debug(f"User '{user_id}' canceled the conversation")
-        message.reply_text(CONVERSATION_CANCELED, quote=True)
+        await query.answer()
+        await message.edit_reply_markup(reply_markup=None)
     else:
-        message = update.message
-        user_id = update.effective_user.id
-        reply_msg_id = context.user_data['cancel_reply_msg_id']
+        markup_msg = context.user_data.get('markup_msg')
+        await markup_msg.edit_reply_markup(reply_markup=None)
 
-        if cancel_reply_markup_msg_id := context.user_data.get('cancel_reply_markup_msg_id'):
-            context.bot.edit_message_reply_markup(user_id, cancel_reply_markup_msg_id)
-
-        logger.debug(f"User '{user_id}' canceled the conversation")
-        message.reply_text(CONVERSATION_CANCELED, reply_to_message_id=reply_msg_id)
-
+    command_msg = context.user_data.get('command_msg')
+    await command_msg.reply_text(conversation_canceled_message_text, quote=True)
     context.user_data.clear()
+
     return ConversationHandler.END

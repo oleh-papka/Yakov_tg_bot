@@ -4,10 +4,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.models import CryptoCurrency, User
 
 
-async def get_crypto_by_user_id(session: AsyncSession, user_id: int) -> list[CryptoCurrency] | None:
+async def get_crypto_by_user_id(session: AsyncSession, user_id: int):
     """Retrieve cryptocurrency by user_id"""
 
-    query = await select(CryptoCurrency).filter(User.id == user_id, User.crypto_currency)
+    query = select(CryptoCurrency).filter(User.id == user_id, User.crypto_currency)
     result = await session.execute(query)
     rows = result.scalars().all()
 
@@ -17,7 +17,7 @@ async def get_crypto_by_user_id(session: AsyncSession, user_id: int) -> list[Cry
 async def get_crypto_by_abbr(session: AsyncSession, abbr: str) -> CryptoCurrency:
     """Retrieve cryptocurrency by abbr"""
 
-    query = await select(CryptoCurrency).where(CryptoCurrency.abbr == abbr)
+    query = select(CryptoCurrency).where(CryptoCurrency.abbr == abbr)
     result = await session.execute(query)
     row = result.scalars().first()
 

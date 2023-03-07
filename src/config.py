@@ -1,7 +1,9 @@
 import logging
 import sys
+from warnings import filterwarnings
 
 from loguru import logger
+from telegram.warnings import PTBUserWarning
 
 from utils.env_utils import load_env_variable
 
@@ -54,7 +56,7 @@ class Config:
 
     logging_lvl = logging.DEBUG if DEBUG_FLAG else logging.INFO
 
-    class InterceptHandler(logging.Handler):
+    class InterceptLogsHandler(logging.Handler):
         def emit(self, record):
             # Get corresponding Loguru level if it exists.
             try:
@@ -70,11 +72,15 @@ class Config:
 
             logger.opt(depth=depth, exception=record.exc_info).log(level, record.getMessage())
 
-    format = '<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | <level>{level: <8}</level> | <cyan>{name: <20.20}</cyan> | <level>{message}</level>'
+    format = ('<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | <level>{level: <8}</level> | <cyan>{name: '
+              '<20.20}</cyan> | <level>{message}</level> ')
 
     logger.remove()
     logger.add(sys.stderr, format=format)
     logger.level("DEBUG", color="<fg #787878>")
     logger.level("INFO", color="<fg #ffffff>")
 
-    logging.basicConfig(handlers=[InterceptHandler()], level=logging_lvl, force=True)
+    logging.basicConfig(handlers=[InterceptLogsHandler()], level=logging_lvl, force=True)
+
+    if not DEBUG_FLAG:
+        filterwarnings(action="ignore", message=r".*CallbackQueryHandler", category=PTBUserWarning)

@@ -1,6 +1,7 @@
 import asyncio
 from logging.config import fileConfig
 
+from alembic.script import ScriptDirectory
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
@@ -12,11 +13,26 @@ from utils.env_utils import load_env_variable
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
-config = context.config
 
-config.set_main_option(
-    "sqlalchemy.url", load_env_variable('DB_URL')
-)
+
+# Configuring database URL
+config = context.config
+config.set_main_option("sqlalchemy.url", load_env_variable('DB_URL'))
+
+
+# Function below configures how revision file names would be displayed
+def process_revision_directives(context, revision, directives):
+    migration_script = directives[0]
+    head_revision = ScriptDirectory.from_config(context.config).get_current_head()
+
+    if head_revision is None:
+        new_rev_id = 1
+    else:
+        last_rev_id = int(head_revision.lstrip('0'))
+        new_rev_id = last_rev_id + 1
+
+    migration_script.rev_id = str(new_rev_id).zfill(4)
+
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
@@ -53,6 +69,7 @@ def run_migrations_offline() -> None:
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
+        process_revision_directives=process_revision_directives
     )
 
     with context.begin_transaction():
@@ -60,7 +77,9 @@ def run_migrations_offline() -> None:
 
 
 def do_run_migrations(connection: Connection) -> None:
-    context.configure(connection=connection, target_metadata=target_metadata)
+    context.configure(connection=connection,
+                      target_metadata=target_metadata,
+                      process_revision_directives=process_revision_directives)
 
     with context.begin_transaction():
         context.run_migrations()
