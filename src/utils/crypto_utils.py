@@ -1,6 +1,6 @@
 import requests
 
-from config import Config
+from src.config import Config
 
 
 def get_crypto_data(positions: int = 10) -> tuple | None:
