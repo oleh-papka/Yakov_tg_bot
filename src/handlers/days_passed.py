@@ -99,6 +99,6 @@ def days_passed(update: Update, context: CallbackContext, db: Session):
     message.reply_text(msg, quote=True)
 
 
-days_passed_handler = MessageHandler(
-    Filters.regex(from_date_regex) | Filters.regex(from_to_date_regex),
-    days_passed)
+# days_passed_handler = MessageHandler(
+#     Filters.regex(from_date_regex) | Filters.regex(from_to_date_regex),
+#     days_passed)

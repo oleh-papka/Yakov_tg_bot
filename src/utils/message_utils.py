@@ -2,9 +2,25 @@ from telegram import Update
 from telegram.ext import CallbackContext
 
 
-def escape_md2_no_links(msg: str) -> str:
-    exclude = ['(', ')', '[', ']']
+def escape_md2(msg: str, exclude: list | None = None) -> str:
     escape_symbols = ['_', '*', '[', ']', '(', ')', '~', '`', '>', '#', '+', '-', '=', '|', '{', '}', '.', '!']
+
+    for character in escape_symbols:
+        if character in exclude:
+            continue
+        msg = msg.replace(character, rf'\{character}')
+
+    return msg
+
+
+def escape_md2_no_links(msg: str, exclude: list | None = None) -> str:
+    link_symbols = ['(', ')', '[', ']']
+    escape_symbols = ['_', '*', '[', ']', '(', ')', '~', '`', '>', '#', '+', '-', '=', '|', '{', '}', '.', '!']
+
+    if exclude is None:
+        exclude = link_symbols
+    else:
+        exclude.extend(link_symbols)
 
     for character in escape_symbols:
         if character in exclude:
