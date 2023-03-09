@@ -3,6 +3,7 @@ from telegram.ext import CallbackContext
 
 
 def escape_md2(msg: str, exclude: list | None = None) -> str:
+    exclude = [] if exclude is None else exclude
     escape_symbols = ['_', '*', '[', ']', '(', ')', '~', '`', '>', '#', '+', '-', '=', '|', '{', '}', '.', '!']
 
     for character in escape_symbols:

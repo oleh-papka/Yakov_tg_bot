@@ -17,4 +17,4 @@ class Feedback(Base):
     read_flag = Column(BOOLEAN, nullable=False)
     timestamp = Column(TIMESTAMP, nullable=False, default=datetime.utcnow)
 
-    user = relationship('User')
+    user = relationship('User', lazy="immediate")
