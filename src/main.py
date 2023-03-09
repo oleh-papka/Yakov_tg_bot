@@ -12,7 +12,8 @@ from src.commands import (help_command_handler,
                           currency_command_handler,
                           profile_conversation_handler,
                           feedback_handler,
-                          feedback_reply_handler)
+                          feedback_reply_handler,
+                          weather_command_handler)
 from src.config import Config
 from src.handlers import (error_handler,
                           unknown_messages)
@@ -27,6 +28,7 @@ def main() -> None:
     application.add_handler(settings_conversation_handler)
     application.add_handler(profile_conversation_handler)
     application.add_handler(feedback_handler)
+    application.add_handler(weather_command_handler)
     application.add_handler(feedback_reply_handler)
     application.add_handler(start_command_handler)
     application.add_handler(help_command_handler)
