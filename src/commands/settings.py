@@ -34,9 +34,9 @@ async def settings(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     async with get_session() as session:
         await create_or_update_user(session, user)
 
-    msg = 'Бажаєш налаштувати щось?\nОбери з нижче наведених опцій:'
+    settings_start_text = 'Бажаєш налаштувати щось?\nОбери з нижче наведених опцій:'
 
-    context.user_data['markup_msg'] = await message.reply_text(msg, reply_markup=main_settings_keyboard)
+    context.user_data['markup_msg'] = await message.reply_text(settings_start_text, reply_markup=main_settings_keyboard)
 
     return SETTINGS_START
 
@@ -52,15 +52,15 @@ async def city_settings_start(update: Update, context: ContextTypes.DEFAULT_TYPE
         users_city_model = user_model.city
 
     if users_city_model:
-        msg = (f'⚠ В тебе уже вказане місто - {users_city_model.local_name}. Ти справді хочеш його змінити?\n\n'
+        city_change_text = (f'⚠ В тебе уже вказане місто - {users_city_model.local_name}. Ти справді хочеш його змінити?\n\n'
                'Для зміни надішли назву міста або пряме посилання на нього '
                'з ua.sinoptik.ua у наступному повідомленні.')
     else:
-        msg = ('🆗 Обрано зміну міста для прогнозу погоди.\n\n'
+        city_change_text = ('🆗 Обрано зміну міста для прогнозу погоди.\n\n'
                'Надішли мені назву міста або пряме посилання на нього з ua.sinoptik.ua '
                'у наступному повідомленні, щоб встановити відповідне.')
 
-    context.user_data['markup_msg'] = await message.edit_text(text=msg, reply_markup=cancel_keyboard)
+    context.user_data['markup_msg'] = await message.edit_text(text=city_change_text, reply_markup=cancel_keyboard)
 
     return CITY_SETTINGS
 

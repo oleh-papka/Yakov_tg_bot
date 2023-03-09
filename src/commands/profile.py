@@ -1,39 +1,27 @@
 import re
 
-from sqlalchemy.orm import Session
-from telegram import (ChatAction,
-                      InlineKeyboardButton,
-                      InlineKeyboardMarkup,
-                      ParseMode,
-                      Update)
-from telegram.ext import (MessageHandler,
-                          CallbackQueryHandler,
-                          CommandHandler,
-                          ConversationHandler,
-                          Filters,
-                          CallbackContext)
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.constants import ParseMode
+from telegram.ext import ContextTypes, ConversationHandler, CommandHandler, CallbackQueryHandler, MessageHandler, \
+    filters
 
-from config import Config
-from crud.city import get_user_city
-from crud.user import create_or_update_user, get_all_users, update_user
-from handlers import cancel
-from handlers.canel_conversation import cancel_keyboard
-from utils.db_utils import create_session
-from utils.message_utils import send_chat_action, escape_str_md2
-from utils.time_utils import UserTime
+from src.config import Config
+from src.crud.user import create_or_update_user, get_user_by_id, get_all_users, update_user
+from src.handlers.canel_conversation import cancel, cancel_keyboard
+from src.utils.db_utils import get_session
+from src.utils.message_utils import escape_md2
+from src.utils.time_utils import UserTime
 
-CONV_START, GET_MESSAGE, SEND_MESSAGE = 1, 2, 3
+PROFILE_START, GET_MESSAGE, SEND_MESSAGE = 1, 2, 3
 
 
-@create_session
-@send_chat_action(ChatAction.TYPING)
-def profile(update: Update, context: CallbackContext, db: Session):
+async def profile(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     message = update.message
     user = message.from_user
-    context.user_data.clear()
-    context.user_data['cancel_reply_msg_id'] = message.message_id
+    context.user_data['command_msg'] = message
 
-    create_or_update_user(db, user)
+    async with get_session() as session:
+        await create_or_update_user(session, user)
 
     resp_keyboard = [
         [InlineKeyboardButton('Мої дані 📊', callback_data='user_data')],
@@ -48,72 +36,74 @@ def profile(update: Update, context: CallbackContext, db: Session):
         resp_keyboard.insert(1, additional_keys)
 
     reply_keyboard = InlineKeyboardMarkup(resp_keyboard)
-    msg = f'{user.name}, у цій команді багато трішки різного, обирай нижче:'
-    message.reply_text(msg, reply_markup=reply_keyboard)
 
-    return CONV_START
+    profile_start_text = f'{user.name}, у цій команді багато трішки різного, обирай нижче:'
+    await message.reply_text(profile_start_text, reply_markup=reply_keyboard)
+
+    return PROFILE_START
 
 
-@create_session
-def user_data(update: Update, context: CallbackContext, db):
+async def user_data(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     query = update.callback_query
     user = update.effective_user
-    query.answer()
+    await query.answer()
 
-    user_model = create_or_update_user(db, user)
+    async with get_session() as session:
+        user_model = await get_user_by_id(session, user.id)
+        users_city_model = user_model.city
+
     since = user_model.joined.strftime('%d/%m/%Y')
-    city = get_user_city(db, user.id)
-    city = 'Немає інформації' if not city else city[0].name
+    city = 'Немає інформації' if not users_city_model else users_city_model.name
     crypto_curr = '*, *'.join([crypto.abbr for crypto in user_model.crypto_currency])
     crypto_curr = 'Немає інформації' if not crypto_curr else crypto_curr
     curr = '*, *'.join([curr.name.upper() for curr in user_model.currency])
     curr = 'Немає інформації' if not curr else curr
 
     user_timezone_repr = UserTime.offset_repr(user_model.timezone_offset)
-    msg = f'🆗 Гаразд, ось усі твої дані: \n\n'
-    msg += f'Місто: *{city}*\n'
-    msg += f'Часовий пояс: *{user_timezone_repr}*\n'
-    msg += f'Мова: *{user_model.language_code}*\n'
-    msg += f'Криптовалюти: *{crypto_curr}*\n'
-    msg += f'Валюти: *{curr}*\n'
-    msg += f'Користувач із: _{since}_\n\n'
-    msg += 'Для зміни та налаштування - /settings'
+    profile_text = f'🆗 Гаразд, ось усі твої дані: \n\n'
+    profile_text += f'Місто: *{city}*\n'
+    profile_text += f'Часовий пояс: *{user_timezone_repr}*\n'
+    profile_text += f'Мова: *{user_model.language_code}*\n'
+    profile_text += f'Криптовалюти: *{crypto_curr}*\n'
+    profile_text += f'Валюти: *{curr}*\n'
+    profile_text += f'Користувач із: _{since}_\n\n'
+    profile_text += 'Для зміни та налаштування - /settings'
 
-    query.edit_message_text(escape_str_md2(msg, ['*', '_']),
-                            parse_mode=ParseMode.MARKDOWN_V2,
-                            reply_markup=None)
+    await query.edit_message_text(escape_md2(profile_text, ['*', '_']),
+                                  parse_mode=ParseMode.MARKDOWN_V2,
+                                  reply_markup=None)
 
     context.user_data.clear()
+
     return ConversationHandler.END
 
 
-def send_to(update: Update, context: CallbackContext):
+async def send_to(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     query = update.callback_query
-    query.answer()
+    await query.answer()
 
-    msg = '🆗 Гаразд, будемо сповіщати {}\n\nНадішли текст цього повідомлення нижче:'
+    send_to_text = '🆗 Гаразд, будемо сповіщати {}\n\nНадішли текст цього повідомлення нижче:'
 
     if query.data == 'send_to_all':
         context.user_data['send_to_all'] = True
-        msg = msg.format('усіх користувачів')
+        send_to_text = send_to_text.format('усіх користувачів')
     else:
         context.user_data['send_to_all'] = False
-        msg = msg.format('тестувальника')
+        send_to_text = send_to_text.format('тестувальника')
 
     context.user_data['send_to_query'] = query
 
-    query.edit_message_text(msg, reply_markup=cancel_keyboard)
+    await query.edit_message_text(send_to_text, reply_markup=cancel_keyboard)
 
     return GET_MESSAGE
 
 
-@send_chat_action(ChatAction.TYPING)
-def message_check(update: Update, context: CallbackContext):
+async def message_check(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     message = update.message
     context.user_data['message_text'] = message.text
 
     if query := context.user_data.get('send_to_query'):
-        query.edit_message_reply_markup()
+        await query.edit_message_reply_markup()
 
     confirmation_keyboard = [
         [
@@ -125,58 +115,60 @@ def message_check(update: Update, context: CallbackContext):
 
     reply_keyboard = InlineKeyboardMarkup(confirmation_keyboard)
 
-    message.reply_text('Впевнений, надіслати дане повідомлення?',
-                       reply_markup=reply_keyboard,
-                       reply_to_message_id=message.message_id)
+    await message.reply_text('Впевнений, надіслати дане повідомлення?',
+                             reply_markup=reply_keyboard,
+                             reply_to_message_id=message.message_id)
 
     return SEND_MESSAGE
 
 
-@create_session
-def send_message(update: Update, context: CallbackContext, db):
+async def send_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     query = update.callback_query
-    query.answer()
+    await query.answer()
 
     msg_text = context.user_data['message_text']
 
-    msg = '🆗 Уже надсилаю...'
-    query.edit_message_text(msg, reply_markup=None)
+    sending_text = '🆗 Уже надсилаю...'
+    await query.edit_message_text(sending_text, reply_markup=None)
 
     if context.user_data.get('send_to_all'):
-        users = get_all_users(db, True)
+        async with get_session() as session:
+            users = await get_all_users(session, True)
+
         users_count = len(users)
         decr = 0
 
         for number, user in enumerate(users):
             try:
-                context.bot.send_message(user.id, msg_text)
+                await context.bot.send_message(user.id, msg_text)
             except:
-                update_user(db, user, {'active': False})
+                async with get_session() as session:
+                    await update_user(session, user, {'active': False})
                 users_count -= 1
                 decr -= 1
 
             number += decr
-            tmp_msg = msg + f'\n\nНадіслано {number + 1} із {users_count}'
-            query.edit_message_text(tmp_msg)
+            tmp_msg = sending_text + f'\n\nНадіслано {number + 1} із {users_count}'
+            await query.edit_message_text(tmp_msg)
 
-        msg = f'✅ Єєєєй! Уже завершив, усі ({users_count}) користувачі отримали твоє повідомлення.'
+        sending_text = f'✅ Єєєєй! Уже завершив, усі ({users_count}) користувачі отримали твоє повідомлення.'
     else:
         user_id = Config.TESTER_ID
         context.bot.send_message(user_id, msg_text)
-        msg = f'✅ Єєєєй! Уже надіслав твоє повідомлення тестувальнику!'
+        sending_text = f'✅ Єєєєй! Уже надіслав твоє повідомлення тестувальнику!'
 
-    query.edit_message_text(msg)
+    await query.edit_message_text(sending_text)
 
     context.user_data.clear()
     return ConversationHandler.END
 
 
-def edit_message(update: Update, context: CallbackContext):
+async def edit_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     query = update.callback_query
-    query.answer()
+    await query.answer()
 
-    msg = '🆗 Надішли у наступному повідомленні відповідно змінене.'
-    query.edit_message_text(msg, reply_markup=None)
+    edit_text = '🆗 Надішли у наступному повідомленні відповідно змінене.'
+    await query.edit_message_text(edit_text, reply_markup=None)
 
     if 'send_to_query' in context.user_data:
         del context.user_data['send_to_query']
@@ -187,15 +179,15 @@ def edit_message(update: Update, context: CallbackContext):
 profile_conversation_handler = ConversationHandler(
     entry_points=[CommandHandler('profile', profile)],
     states={
-        CONV_START: [
+        PROFILE_START: [
             CallbackQueryHandler(cancel, pattern='^cancel$'),
             CallbackQueryHandler(send_to, pattern='^send_to'),
             CallbackQueryHandler(user_data, pattern='^user_data$')
         ],
         GET_MESSAGE: [
             CallbackQueryHandler(cancel, pattern='^cancel$'),
-            MessageHandler(Filters.regex(re.compile(r'^/')), cancel),
-            MessageHandler(Filters.text, message_check)
+            MessageHandler(filters.COMMAND, cancel),
+            MessageHandler(filters.TEXT, message_check)
         ],
         SEND_MESSAGE: [
             CallbackQueryHandler(cancel, pattern='^cancel$'),
@@ -204,7 +196,7 @@ profile_conversation_handler = ConversationHandler(
         ]
     },
     fallbacks=[
-        MessageHandler(Filters.all, cancel)
+        MessageHandler(filters.ALL, cancel)
     ],
     conversation_timeout=600.0
 )
