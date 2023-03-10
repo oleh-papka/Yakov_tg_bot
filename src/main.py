@@ -19,7 +19,8 @@ from src.commands import (help_command_handler,
                           tip_developer_handler)
 from src.config import Config
 from src.handlers import (error_handler,
-                          unknown_messages)
+                          unknown_messages,
+                          days_passed_handler)
 
 logger = logging.getLogger(__name__)
 
@@ -29,6 +30,7 @@ def main() -> None:
 
     # TODO: Add checks for DB
 
+    # TODO: Sort handlers
     # Register commands
     application.add_handler(settings_conversation_handler)
     application.add_handler(profile_conversation_handler)
@@ -43,6 +45,7 @@ def main() -> None:
     application.add_handler(tip_developer_handler)
     application.add_handler(precheckout_handler)
     application.add_handler(successful_payment_handler)
+    application.add_handler(days_passed_handler)
 
     # Register error handlers
     application.add_error_handler(error_handler)

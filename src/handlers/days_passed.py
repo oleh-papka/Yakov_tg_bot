@@ -2,9 +2,8 @@ import re
 from datetime import datetime
 
 from dateutil import relativedelta
-from sqlalchemy.orm import Session
 from telegram import Update
-from telegram.ext import CallbackContext, MessageHandler
+from telegram.ext import MessageHandler, filters, ContextTypes
 
 from src.config import Config
 
@@ -89,16 +88,13 @@ def compose_passed_days_msg(data: tuple, desc: str | None = None) -> str:
     return msg
 
 
-def days_passed(update: Update, context: CallbackContext, db: Session):
+async def days_passed(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     message = update.message
-    user = update.effective_user
     text = message.text
 
     parsed_date = parse_date(text)
     msg = compose_passed_days_msg(data=calc_date_diff(*parsed_date))
-    message.reply_text(msg, quote=True)
+    await message.reply_text(msg, quote=True)
 
 
-# days_passed_handler = MessageHandler(
-#     Filters.regex(from_date_regex) | Filters.regex(from_to_date_regex),
-#     days_passed)
+days_passed_handler = MessageHandler(filters.Regex(from_date_regex) | filters.Regex(from_to_date_regex), days_passed)
