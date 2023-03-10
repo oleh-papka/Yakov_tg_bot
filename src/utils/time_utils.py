@@ -2,9 +2,6 @@ from datetime import datetime, timezone, timedelta
 
 
 class UserTime(datetime):
-    # TODO: refactor class (minimize static methods)
-    #  integrate class usage more
-
     def __new__(cls, *args, **kwargs):
         if offset := kwargs.get('offset'):
             dt = datetime.now(timezone.utc) + timedelta(seconds=offset)
@@ -36,13 +33,16 @@ class UserTime(datetime):
         """Returns time in 'HH:MM' format"""
         return self.dt.strftime('%H:%M')
 
-    def date_repr(self, style_flag: None | bool = None) -> str:
+    def date_repr(self, style_flag: None | bool = None, custom_separator: str = None) -> str:
         """Returns date in 'YYYY-MM-DD' format"""
-        # TODO: add custom separator
-        if style_flag:
-            resp = self.dt.strftime('%d.%m.%Y')
+
+        if custom_separator:
+            resp = self.dt.strftime(f'%d{custom_separator}%m{custom_separator}%Y')
         else:
-            resp = self.dt.strftime('%Y-%m-%d')
+            if style_flag:
+                resp = self.dt.strftime('%d.%m.%Y')
+            else:
+                resp = self.dt.strftime('%Y-%m-%d')
         return resp
 
     def time_date_repr(self) -> str:

@@ -21,6 +21,7 @@ from src.config import Config
 from src.handlers import (error_handler,
                           unknown_messages,
                           days_passed_handler)
+from src.utils.db_utils import check_db
 
 logger = logging.getLogger(__name__)
 
@@ -28,24 +29,30 @@ logger = logging.getLogger(__name__)
 def main() -> None:
     application = Application.builder().token(Config.BOT_TOKEN).build()
 
-    # TODO: Add checks for DB
+    # Check DB
+    if not check_db():
+        logger.critical("DB not found!")
+        exit()
 
-    # TODO: Sort handlers
     # Register commands
-    application.add_handler(settings_conversation_handler)
-    application.add_handler(profile_conversation_handler)
-    application.add_handler(feedback_handler)
-    application.add_handler(weather_command_handler)
-    application.add_handler(feedback_reply_handler)
     application.add_handler(start_command_handler)
     application.add_handler(help_command_handler)
+    application.add_handler(settings_conversation_handler)
+    application.add_handler(profile_conversation_handler)
+    application.add_handler(weather_command_handler)
     application.add_handler(ru_losses_handler)
     application.add_handler(crypto_command_handler)
     application.add_handler(currency_command_handler)
+    application.add_handler(feedback_handler)
+    application.add_handler(feedback_reply_handler)
+
+    # Register other handlers
+    application.add_handler(days_passed_handler)
+
+    # Test tip handlers
     application.add_handler(tip_developer_handler)
     application.add_handler(precheckout_handler)
     application.add_handler(successful_payment_handler)
-    application.add_handler(days_passed_handler)
 
     # Register error handlers
     application.add_error_handler(error_handler)
