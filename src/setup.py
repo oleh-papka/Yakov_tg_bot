@@ -24,7 +24,8 @@ curr_models = [
 ]
 
 if __name__ == '__main__':
-    engine = create_engine(os.getenv('DB_URL'))  # Mind that synchronous URL should be used
+    engine = create_engine(
+        os.getenv('DB_URL').replace('+asyncpg', ''))  # Mind that synchronous URL should be used, but I got you
     Session = sessionmaker(bind=engine)
 
     with Session() as db:

@@ -33,7 +33,6 @@ async def weather(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     # else:
     #     date = user_time.date_repr()
 
-    # TODO: Check for free screenshot API alternatives
     # if sinoptik_url := users_city_model.sinoptik_url:
     #     if picture := ScreenshotAPI.get_photo(sinoptik_url, date):
     #         date_verbose = 'завтра' if user_time.next_day_flag else 'сьогодні'
