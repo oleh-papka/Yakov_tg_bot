@@ -1,28 +1,27 @@
-from sqlalchemy.orm import Session
-from telegram import Update, ParseMode, MessageEntity, ChatAction
-from telegram.ext import CommandHandler, CallbackContext
+from telegram import Update
+from telegram.constants import ParseMode
+from telegram.ext import CommandHandler, ContextTypes
 
-from crud.user import create_or_update_user
-from utils.db_utils import create_session
-from utils.message_utils import send_chat_action, escape_str_md2
+from src.crud.user import create_or_update_user
+from src.utils import escape_md2_no_links
+from src.utils.db_utils import get_session
 
 
-@create_session
-@send_chat_action(ChatAction.TYPING)
-def start(update: Update, context: CallbackContext, db: Session) -> None:
-    message = update.message
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user = update.effective_user
-    create_or_update_user(db, user)
 
-    msg = (f"Привіт {user.first_name}, я Yakov і створений тому, що моєму [розробнику]"
-           "(tg://user?id={Config.CREATOR_ID}) було нудно.\nЯ постійно отримую апдейти "
-           "та нові функції, залишайся зі мною, розробнику приємно, а тобі цікаві фішки 🙃\n\n"
-           "Підказка - /help\n\nP.S. Підтримати ЗСУ можна [тут]"
-           "(https://savelife.in.ua/donate/#payOnce), Слава Україні!")
+    # Create a new user instance and add it to the database
+    async with get_session() as session:
+        await create_or_update_user(session, user)
 
-    msg_cleared = escape_str_md2(msg, MessageEntity.TEXT_LINK)
+    start_message_text = (f"Привіт {user.first_name}, я Yakov і створений тому, що моєму [розробнику]"
+                          "(tg://user?id={Config.CREATOR_ID}) було нудно.\nЯ постійно отримую апдейти "
+                          "та нові функції, залишайся зі мною, розробнику приємно, а тобі цікаві фішки 🙃\n\n"
+                          "Підказка - /help")
 
-    message.reply_text(msg_cleared, parse_mode=ParseMode.MARKDOWN_V2, disable_web_page_preview=True)
+    await update.message.reply_text(escape_md2_no_links(start_message_text),
+                                    parse_mode=ParseMode.MARKDOWN_V2,
+                                    disable_web_page_preview=True)
 
 
 start_command_handler = CommandHandler('start', start)

@@ -1,7 +1,7 @@
 from sqlalchemy import Column, ForeignKey
 from sqlalchemy.dialects.postgresql import INTEGER
 
-from models.base import Base
+from ..base import Base
 
 
 class CryptoCurrencyWatchlist(Base):

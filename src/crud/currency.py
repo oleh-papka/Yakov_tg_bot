@@ -1,24 +1,24 @@
-from sqlalchemy.orm import Session
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from models import Currency, User
+from src.models import Currency, User
 
 
-def get_curr_by_user_id(db: Session, user_id: int) -> list | None:
-    rows = db.query(
-        Currency
-    ).filter(
-        User.id == user_id,
-        User.currency
-    ).all()
+async def get_curr_by_user_id(session: AsyncSession, user_id: int):
+    """Retrieve currency by user_id"""
+
+    query = select(Currency).filter(User.id == user_id, User.currency)
+    result = await session.execute(query)
+    rows = result.scalars().all()
 
     return rows
 
 
-def get_curr_by_name(db: Session, name: str) -> Currency:
-    row = db.query(
-        Currency
-    ).filter(
-        Currency.name == name
-    ).first()
+async def get_curr_by_name(session: AsyncSession, name: str) -> Currency:
+    """Retrieve currency by name"""
+
+    query = select(Currency).where(Currency.name == name)
+    result = await session.execute(query)
+    row = result.scalars().first()
 
     return row

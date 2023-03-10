@@ -2,8 +2,7 @@ from sqlalchemy import Column
 from sqlalchemy.dialects.postgresql import INTEGER, VARCHAR
 from sqlalchemy.orm import relationship
 
-from models.base import Base
-
+from ..base import Base
 
 class Currency(Base):
     __tablename__ = 'currency'

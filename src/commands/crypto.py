@@ -1,38 +1,37 @@
-from sqlalchemy.orm import Session
-from telegram import Update, ChatAction, ParseMode
-from telegram.ext import CommandHandler, CallbackContext
+from telegram import Update
+from telegram.ext import CommandHandler, ContextTypes
 
-from crud.user import create_or_update_user
-from utils.crypto_utils import get_crypto_data, compose_crypto_msg
-from utils.db_utils import create_session
-from utils.message_utils import escape_str_md2, send_chat_action
-from utils.time_utils import UserTime
+from src.crud.user import get_user_by_id
+from src.utils.crypto_utils import compose_crypto_msg, get_crypto_data
+from src.utils.db_utils import get_session
+from src.utils.message_utils import escape_md2
+from src.utils.time_utils import UserTime
 
 
-@create_session
-@send_chat_action(ChatAction.TYPING)
-def crypto_command(update: Update, context: CallbackContext, db: Session) -> None:
+async def crypto_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     message = update.message
     user = update.effective_user
-    user_model = create_or_update_user(db, user)
-    coins = [coin.id for coin in user_model.crypto_currency]
+
+    async with get_session() as session:
+        user_model = await get_user_by_id(session, user.id)
+        coins = [coin.id for coin in user_model.crypto_currency]
 
     if not coins:
-        msg = ('⚠ Жодної криптовалюти не вказано для відстежування, щоб '
-               'налаштувати команду, обери відповідні в нелаштуваннях - /settings')
-        message.reply_text(msg)
+        coins_not_found_text = ('⚠ Жодної криптовалюти не вказано для відстежування, щоб '
+                                'налаштувати команду, обери відповідні в нелаштуваннях - /settings')
+        await message.reply_text(coins_not_found_text)
         return
 
     crypto_data = get_crypto_data()
     if crypto_data is None:
-        msg = '⚠ Щось пішло не так, немає відповіді від API...'
-        message.reply_text(msg)
+        error_text = '⚠ Щось пішло не так, немає відповіді від API...'
+        await message.reply_text(error_text)
         return
     else:
         time = UserTime.get_time_from_offset(user_model.timezone_offset)['date_time']
-        msg = f'CoinMarketCup дані на (*{time}*):\n\n'
-        msg += compose_crypto_msg(*crypto_data, coins=coins)
-        message.reply_text(escape_str_md2(msg, exclude=['*', '_']), parse_mode=ParseMode.MARKDOWN_V2)
+        crypto_text = f'CoinMarketCup дані на (*{time}*):\n\n'
+        crypto_text += compose_crypto_msg(*crypto_data, coins=coins)
+        await message.reply_markdown_v2(escape_md2(crypto_text, exclude=['*', '_']))
 
 
 crypto_command_handler = CommandHandler('crypto', crypto_command)

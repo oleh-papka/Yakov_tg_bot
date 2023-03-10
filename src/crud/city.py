@@ -1,39 +1,30 @@
-from sqlalchemy.engine import Row
-from sqlalchemy.orm import Session
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from models import City, User
-
-
-def get_city(db: Session, city_name: str) -> City | None:
-    city_model = db.query(
-        City
-    ).filter(
-        City.name == city_name
-    ).first()
-
-    return city_model
+from src.crud.user import get_user_by_id
+from src.models import City
 
 
-def get_user_city(db: Session, user_id: int) -> Row[City, User] | None:
-    row = db.query(
-        City,
-        User
-    ).filter(
-        User.id == user_id,
-        User.city
-    ).first()
+async def get_city_by_name(session: AsyncSession, city_name: str) -> City | None:
+    """Retrieve city by city_name"""
 
-    return row
+    query = select(City).where(City.name == city_name)
+    result = await session.execute(query)
+    city = result.scalars().first()
+
+    return city
 
 
-def create_city(db: Session,
-                owm_id: int,
-                name: str,
-                local_name: str,
-                lat: float,
-                lon: float,
-                sinoptik_url: str = None,
-                timezone_offset: int = None) -> City:
+async def create_city(session: AsyncSession,
+                      owm_id: int,
+                      name: str,
+                      local_name: str,
+                      lat: float,
+                      lon: float,
+                      sinoptik_url: str = None,
+                      timezone_offset: int = None) -> None:
+    """Create city"""
+
     city_model = City(
         owm_id=owm_id,
         name=name,
@@ -44,7 +35,5 @@ def create_city(db: Session,
         timezone_offset=timezone_offset
     )
 
-    db.add(city_model)
-    db.commit()
-
-    return city_model
+    session.add(city_model)
+    await session.commit()

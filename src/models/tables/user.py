@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import Column, TIMESTAMP
+from sqlalchemy import Column, TIMESTAMP, ForeignKey
 from sqlalchemy.dialects.postgresql import INTEGER, VARCHAR, BOOLEAN
 from sqlalchemy.orm import relationship
 
@@ -18,7 +18,14 @@ class User(Base):
     language_code = Column(VARCHAR(2), nullable=False)
     timezone_offset = Column(INTEGER, nullable=True, default=10800)
     active = Column(BOOLEAN, nullable=False, default=True)
+    city_id = Column(INTEGER, ForeignKey('city.id'), nullable=True)
 
-    city = relationship('City', secondary='user_city', overlaps='user')
-    currency = relationship('Currency', secondary='currency_watchlist', overlaps='user')
-    crypto_currency = relationship('CryptoCurrency', secondary='crypto_currency_watchlist', overlaps='user')
+    city = relationship('City', lazy="immediate")
+    currency = relationship('Currency',
+                            secondary='currency_watchlist',
+                            overlaps='user',
+                            lazy="immediate")
+    crypto_currency = relationship('CryptoCurrency',
+                                   secondary='crypto_currency_watchlist',
+                                   overlaps='user',
+                                   lazy="immediate")

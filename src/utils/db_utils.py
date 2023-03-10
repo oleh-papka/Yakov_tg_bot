@@ -1,17 +1,21 @@
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from contextlib import asynccontextmanager
 
-from config import Config
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
+
+from src.config import Config
+
+engine = create_async_engine(Config.DB_URL)
 
 
-def create_session(func):
-    def wrapper(*args, **kwargs):
-        engine = create_engine(Config.DB_URL)
-        session = sessionmaker(bind=engine)
+@asynccontextmanager
+async def get_session():
+    try:
+        async_session = async_sessionmaker(engine, class_=AsyncSession)
 
-        with session() as db:
-            res = func(*args, **kwargs, db=db)
-
-        return res
-
-    return wrapper
+        async with async_session() as session:
+            yield session
+    except:
+        await session.rollback()
+        raise
+    finally:
+        await session.close()

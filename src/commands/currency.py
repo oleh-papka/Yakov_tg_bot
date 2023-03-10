@@ -1,36 +1,34 @@
 import requests
 from bs4 import BeautifulSoup
-from sqlalchemy.orm import Session
-from telegram import Update, ChatAction, ParseMode
-from telegram.ext import CallbackContext, CommandHandler
+from telegram import Update
+from telegram.ext import CommandHandler, ContextTypes
 
-from config import Config
-from crud.currency import get_curr_by_user_id
-from crud.user import create_or_update_user
-from utils.db_utils import create_session
-from utils.message_utils import send_chat_action, escape_str_md2
-from utils.time_utils import UserTime
+from src.config import Config
+from src.crud.currency import get_curr_by_user_id
+from src.crud.user import get_user_by_id
+from src.utils.db_utils import get_session
+from src.utils.message_utils import escape_md2
+from src.utils.time_utils import UserTime
 
 
-@create_session
-@send_chat_action(ChatAction.TYPING)
-def currency(update: Update, context: CallbackContext, db: Session):
+async def currency(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     message = update.message
     user = update.effective_user
-    user_model = create_or_update_user(db, user)
-    user_time = UserTime.get_time_from_offset(user_model.timezone_offset)
+
+    async with get_session() as session:
+        user_model = await get_user_by_id(session, user.id)
+        user_time = UserTime.get_time_from_offset(user_model.timezone_offset)
+        curr_models = await get_curr_by_user_id(session, update.effective_user.id)
 
     url = "https://minfin.com.ua/ua/currency/{}"
 
-    msg = f"Дані по валюті на (*{user_time['date_time']}*)\n\n"
-    err_msg = "Ситуація, не можу отримати дані із сайту..."
-
-    curr_models = get_curr_by_user_id(db, update.effective_user.id)
+    curr_text = f"Дані по валюті на (*{user_time['date_time']}*)\n\n"
+    error_text = "Ситуація, не можу отримати дані із сайту..."
 
     if not curr_models:
-        msg = ('⚠ Жодної валюти не вказано для відстежування, щоб налаштувати'
-               ' команду, обери відповідні в нелаштуваннях - /settings')
-        message.reply_text(msg)
+        curr_text = ('⚠ Жодної валюти не вказано для відстежування, щоб налаштувати'
+                     ' команду, обери відповідні в нелаштуваннях - /settings')
+        await message.reply_text(curr_text)
         return
 
     for model in curr_models:
@@ -39,7 +37,8 @@ def currency(update: Update, context: CallbackContext, db: Session):
         response = requests.get(url.format(curr))
 
         if not response.ok:
-            return message.reply_text(err_msg)
+            await message.reply_text(error_text)
+            return
 
         soup = BeautifulSoup(response.text, 'lxml')
 
@@ -47,30 +46,32 @@ def currency(update: Update, context: CallbackContext, db: Session):
                             "div > section:nth-child(3) > div.mfm-grey-bg > table")
 
         if not table:
-            return message.reply_text(err_msg)
+            await message.reply_text(error_text)
+            return
 
         rows = table[0].find_all('tr')[1:]
         if not rows:
-            return message.reply_text(err_msg)
+            await message.reply_text(error_text)
+            return
 
-        msg += f'{emoji} *{curr.upper()}:*\n'
+        curr_text += f'{emoji} *{curr.upper()}:*\n'
 
         for row in rows[:-1]:  # Get all prices without НБУ price
             tds = row.find_all('td')
             market_type = tds[0].a.text.capitalize()
             buy = float(tds[1].span.text.split('\n')[0])
             sell = float(tds[2].span.text.split('\n')[0])
-            msg += f'{Config.SPACING}{market_type}:  _{buy:0.2f}₴_ | _{sell:0.2f}₴_\n'
+            curr_text += f'{Config.SPACING}{market_type}:  _{buy:0.2f}₴_ | _{sell:0.2f}₴_\n'
 
         # Get НБУ price
         td = rows[-1].find_all('td')
         market_type = td[0].a.text
         price = float(td[1].span.text.split('\n')[0])
-        msg += f'{Config.SPACING}{market_type}:  _{price:0.2f}₴_\n'
+        curr_text += f'{Config.SPACING}{market_type}:  _{price:0.2f}₴_\n'
 
-        msg += '\n'
+        curr_text += '\n'
 
-    message.reply_text(escape_str_md2(msg, exclude=['*', '_']), parse_mode=ParseMode.MARKDOWN_V2)
+    await message.reply_markdown_v2(escape_md2(curr_text, exclude=['*', '_']))
 
 
 currency_command_handler = CommandHandler('currency', currency)

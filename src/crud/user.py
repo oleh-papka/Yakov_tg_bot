@@ -1,43 +1,37 @@
-import logging
-
 import telegram
-from sqlalchemy import update
-from sqlalchemy.orm import Session
+from loguru import logger
+from sqlalchemy import update, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
-import models
-
-logger = logging.getLogger(__name__)
+from src import models
 
 
-def get_user(db: Session, user_id: int) -> models.User:
+async def get_user_by_id(session: AsyncSession, user_id: int) -> models.User:
     """Retrieve user by user_id"""
-    user = db.query(
-        models.User
-    ).filter(
-        models.User.id == user_id
-    ).first()
+
+    query = select(models.User).where(models.User.id == user_id)
+    result = await session.execute(query)
+    user = result.scalars().first()
 
     return user
 
 
-def get_all_users(db: Session, active_flag: None | bool = None) -> list:
-    """Retrieve all users from db"""
+async def get_all_users(session: AsyncSession, active_flag: None | bool = None):
+    """Retrieve all users from session"""
+
+    base_query = select(models.User)
+
     if active_flag:
-        users = db.query(
-            models.User
-        ).filter(
-            models.User.active == True
-        ).all()
+        users = await session.execute(base_query.where(models.User.active == True))
     else:
-        users = db.query(
-            models.User
-        ).all()
+        users = await session.execute(base_query)
 
-    return users
+    return users.scalars().all()
 
 
-def create_user(db: Session, user: telegram.User) -> models.User:
-    """Creates user in db"""
+async def create_user(session: AsyncSession, user: telegram.User) -> models.User:
+    """Create user from telegram User object"""
+
     user_model = models.User(
         id=user.id,
         username=user.username,
@@ -46,32 +40,31 @@ def create_user(db: Session, user: telegram.User) -> models.User:
         language_code=user.language_code
     )
 
-    db.add(user_model)
-    db.commit()
+    session.add(user_model)
+    await session.commit()
 
     return user_model
 
 
-def update_user(db: Session, user: telegram.User, user_data: dict) -> None:
+async def update_user(session: AsyncSession, user: telegram.User, user_data: dict) -> None:
     """Update specific parameter for user"""
-    update_query = update(
-        models.User
-    ).where(
-        models.User.id == user.id
-    ).values(user_data)
 
-    db.execute(update_query)
-    db.commit()
+    update_query = update(models.User).where(models.User.id == user.id).values(user_data)
+
+    await session.execute(update_query)
+    await session.commit()
 
     changes = [f"'{key}'->'{value}'" for key, value in user_data.items()]
     changes = ' '.join(changes)
 
-    logger.debug(f'Changed: {changes} for user {user.name} (id:{user.id})')
+    logger.info(f'Changed: {changes} for user {user.name} (id:{user.id})')
 
 
-def user_update_multiple(db: Session,
-                         user: telegram.User, user_model: models.User) -> None:
+async def user_update_multiple(session: AsyncSession,
+                               user: telegram.User,
+                               user_model: models.User) -> None:
     """Update user if needed according to telegram.User object"""
+
     user_data = {}
 
     if user_model.username != user.username:
@@ -86,16 +79,17 @@ def user_update_multiple(db: Session,
         user_data['active'] = True
 
     if user_data:
-        update_user(db, user, user_data)
+        await update_user(session, user, user_data)
     else:
-        logger.debug(f'Nothing to change for user {user.name} (id:{user.id})')
+        logger.info(f'Nothing to change for user {user.name} (id:{user.id})')
 
 
-def create_or_update_user(db: Session, user: telegram.User) -> models.User:
+async def create_or_update_user(session: AsyncSession, user: telegram.User) -> models.User:
     """Create new user or update user info if needed"""
-    if user_model := get_user(db, user.id):
-        user_update_multiple(db, user, user_model)
+
+    if user_model := await get_user_by_id(session, user.id):
+        await user_update_multiple(session, user, user_model)
     else:
-        user_model = create_user(db, user)
+        user_model = await create_user(session, user)
 
     return user_model

@@ -1,8 +1,8 @@
-from sqlalchemy import Column
+from sqlalchemy import Column, ForeignKey
 from sqlalchemy.dialects.postgresql import INTEGER, VARCHAR, REAL, TEXT
 from sqlalchemy.orm import relationship
 
-from models.base import Base
+from ..base import Base
 
 
 class City(Base):
@@ -16,5 +16,3 @@ class City(Base):
     lon = Column(REAL, nullable=True)
     sinoptik_url = Column(TEXT, nullable=True)
     timezone_offset = Column(INTEGER, nullable=True)
-
-    user = relationship('User', secondary='user_city')
