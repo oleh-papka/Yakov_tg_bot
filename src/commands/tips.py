@@ -1,26 +1,19 @@
-from telegram import (LabeledPrice,
-                      Update,
-                      ParseMode,
-                      ChatAction,
-                      MessageEntity)
-from telegram.ext import (CommandHandler,
-                          PreCheckoutQueryHandler,
-                          MessageHandler,
-                          Filters,
-                          CallbackContext)
+from telegram import Update, LabeledPrice
+from telegram.constants import ParseMode
+from telegram.ext import ContextTypes, CommandHandler, PreCheckoutQueryHandler, MessageHandler, filters
 
-from config import Config
-from crud.user import create_or_update_user
-from utils.db_utils import create_session
-from utils.message_utils import send_chat_action, escape_str_md2
+from src.config import Config
+from src.crud.user import create_or_update_user
+from src.utils import escape_md2_no_links
+from src.utils.db_utils import get_session
 
 
-@create_session
-@send_chat_action(ChatAction.TYPING)
-def tip_developer(update: Update, context: CallbackContext, db):
+async def tip_developer(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     chat_id = update.message.chat_id
     user = update.effective_user
-    create_or_update_user(db, user)
+
+    async with get_session() as session:
+        await create_or_update_user(session, user)
 
     title = 'Купити смаколиків розробнику'
     description = 'Я старався'
@@ -32,7 +25,7 @@ def tip_developer(update: Update, context: CallbackContext, db):
     max_tip_amount = 10000
     suggested_tip_amounts = [1000, 5000, 10000]
 
-    context.bot.send_invoice(
+    await context.bot.send_invoice(
         chat_id,
         title,
         description,
@@ -52,29 +45,28 @@ def tip_developer(update: Update, context: CallbackContext, db):
     )
 
 
-@send_chat_action(ChatAction.TYPING)
-def payment_precheckout(update: Update, context: CallbackContext):
+async def payment_precheckout(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     query = update.pre_checkout_query
 
     if query.invoice_payload != 'Custom-Payload':
-        query.answer(ok=False, error_message="Щось пішло не так...")
+        await query.answer(ok=False, error_message="Щось пішло не так...")
     else:
-        query.answer(ok=True)
+        await query.answer(ok=True)
 
 
-@send_chat_action(ChatAction.TYPING)
-def successful_payment(update: Update, context: CallbackContext):
+async def successful_payment(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     message = update.message
     payment = message.successful_payment
     user = message.from_user
-    msg = (f'Не повіриш! Добра душа [{user.first_name}](tg://user?id={user.id}) '
-           f'передала тобі пару гривників \({payment.total_amount / 100:g} {payment.currency}\)!')
 
-    message.reply_text("✅ Чотенько, дякую за грошенятка!")
-    context.bot.send_message(Config.OWNER_ID, escape_str_md2(msg, exclude=MessageEntity.TEXT_LINK),
-                             parse_mode=ParseMode.MARKDOWN_V2)
+    money_sent_text = (f'Не повіриш! Добра душа [{user.first_name}](tg://user?id={user.id}) '
+                       f'передала тобі пару гривників \({payment.total_amount / 100:g} {payment.currency}\)!')
+
+    await message.reply_text("✅ Чотенько, дякую за грошенятка!")
+    await context.bot.send_message(Config.OWNER_ID, escape_md2_no_links(money_sent_text),
+                                   parse_mode=ParseMode.MARKDOWN_V2)
 
 
 tip_developer_handler = CommandHandler("tip_developer", tip_developer)
 precheckout_handler = PreCheckoutQueryHandler(payment_precheckout)
-successful_payment_handler = MessageHandler(Filters.successful_payment, successful_payment)
+successful_payment_handler = MessageHandler(filters.SUCCESSFUL_PAYMENT, successful_payment)
