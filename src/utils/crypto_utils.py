@@ -8,7 +8,8 @@ def get_crypto_data(positions: int = 10) -> tuple | None:
     params_uah = {'start': '1', 'limit': str(positions), 'convert': 'UAH'}
 
     api_url = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest'
-    headers = {'Accepts': 'application/json', 'X-CMC_PRO_API_KEY': Config.CMC_API_TOKEN}
+    headers = {'Accepts': 'application/json',
+               'X-CMC_PRO_API_KEY': Config.CMC_API_TOKEN}
 
     with requests.Session() as session:
         session.headers.update(headers)
@@ -35,9 +36,12 @@ def compose_crypto_msg(usd, uah, positions: int, coins: list) -> str:
         price_usd = round(usd['data'][i]['quote']['USD']['price'], 1)
         price_uah = round(uah['data'][i]['quote']['UAH']['price'], 1)
 
-        change_1h = round(usd['data'][i]['quote']['USD']['percent_change_1h'], 2)
-        change_24h = round(usd['data'][i]['quote']['USD']['percent_change_24h'], 2)
-        change_7d = round(usd['data'][i]['quote']['USD']['percent_change_7d'], 2)
+        change_1h = round(usd['data'][i]['quote']['USD']
+                          ['percent_change_1h'], 2)
+        change_24h = round(usd['data'][i]['quote']['USD']
+                           ['percent_change_24h'], 2)
+        change_7d = round(usd['data'][i]['quote']['USD']
+                          ['percent_change_7d'], 2)
 
         if change_1h > 0.2:
             main_emoji = '💹'

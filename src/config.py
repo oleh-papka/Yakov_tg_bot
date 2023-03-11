@@ -12,23 +12,29 @@ class Config:
     ###########################################################################
     #                         Set up env vars below ⬇                         #
     ###########################################################################
-    DEBUG_FLAG = bool(load_env_variable('DEBUG_FLAG', int))  # Enables debug level logging
+    DEBUG_FLAG = bool(load_env_variable('DEBUG_FLAG', int)
+                      )  # Enables debug level logging
 
     BOT_TOKEN = load_env_variable('BOT_TOKEN')  # Your Telegram bot token
 
     OWNER_ID = load_env_variable('OWNER_ID', int)  # Bot owner Telegram id
-    TESTER_ID = load_env_variable('TESTER_ID', int, False)  # Bot tester Telegram id
+    TESTER_ID = load_env_variable(
+        'TESTER_ID', int, False)  # Bot tester Telegram id
 
-    CMC_API_TOKEN = load_env_variable('CMC_API_TOKEN')  # CoinMarketCup API token
-    SCREENSHOT_API_TOKEN = load_env_variable('SCREENSHOT_API_TOKEN')  # Screenshot api token
-    OWM_API_TOKEN = load_env_variable('OWM_API_TOKEN')  # OpenWeatherMap API token
+    CMC_API_TOKEN = load_env_variable(
+        'CMC_API_TOKEN')  # CoinMarketCup API token
+    SCREENSHOT_API_TOKEN = load_env_variable(
+        'SCREENSHOT_API_TOKEN')  # Screenshot api token
+    OWM_API_TOKEN = load_env_variable(
+        'OWM_API_TOKEN')  # OpenWeatherMap API token
 
     DB_URL = load_env_variable('DB_URL')  # URL to your db
 
     ###########################################################################
     #               Heroku hosting only. Currently unsupported!               #
     ###########################################################################
-    WEBHOOK_FLAG = bool(load_env_variable('WEBHOOK_FLAG', int))  # Enables webhooks
+    WEBHOOK_FLAG = bool(load_env_variable(
+        'WEBHOOK_FLAG', int))  # Enables webhooks
     BOT_LINK = load_env_variable('BOT_LINK', error_if_none=WEBHOOK_FLAG)
     # Heroku dynamically allocates application port and sets it to `PORT` env var
     BOT_PORT = load_env_variable('PORT', int, error_if_none=WEBHOOK_FLAG)
@@ -70,7 +76,8 @@ class Config:
                 frame = frame.f_back
                 depth += 1
 
-            logger.opt(depth=depth, exception=record.exc_info).log(level, record.getMessage())
+            logger.opt(depth=depth, exception=record.exc_info).log(
+                level, record.getMessage())
 
     format = ('<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | <level>{level: <8}</level> | <cyan>{name: '
               '<20.20}</cyan> | <level>{message}</level> ')
@@ -80,7 +87,9 @@ class Config:
     logger.level("DEBUG", color="<fg #787878>")
     logger.level("INFO", color="<fg #ffffff>")
 
-    logging.basicConfig(handlers=[InterceptLogsHandler()], level=logging_lvl, force=True)
+    logging.basicConfig(
+        handlers=[InterceptLogsHandler()], level=logging_lvl, force=True)
 
     if not DEBUG_FLAG:
-        filterwarnings(action="ignore", message=r".*CallbackQueryHandler", category=PTBUserWarning)
+        filterwarnings(
+            action="ignore", message=r".*CallbackQueryHandler", category=PTBUserWarning)

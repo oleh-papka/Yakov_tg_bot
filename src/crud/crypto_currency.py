@@ -7,7 +7,8 @@ from src.models import CryptoCurrency, User
 async def get_crypto_by_user_id(session: AsyncSession, user_id: int):
     """Retrieve cryptocurrency by user_id"""
 
-    query = select(CryptoCurrency).filter(User.id == user_id, User.crypto_currency)
+    query = select(CryptoCurrency).filter(
+        User.id == user_id, User.crypto_currency)
     result = await session.execute(query)
     rows = result.scalars().all()
 

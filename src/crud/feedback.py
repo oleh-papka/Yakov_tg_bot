@@ -38,6 +38,7 @@ async def mark_feedback_read(session: AsyncSession, msg_id: int) -> None:
 async def create_feedback(session: AsyncSession, user_id: int, msg_id: int, msg_text: str, read_flag: bool) -> None:
     """Update read_flag for feedback by message_id"""
 
-    feedback_model = Feedback(user_id=user_id, msg_id=msg_id, msg_text=msg_text, read_flag=read_flag)
+    feedback_model = Feedback(
+        user_id=user_id, msg_id=msg_id, msg_text=msg_text, read_flag=read_flag)
     session.add(feedback_model)
     await session.commit()

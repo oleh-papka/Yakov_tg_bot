@@ -5,7 +5,8 @@ from telegram import (Update,
                       InlineKeyboardButton, Message)
 from telegram.ext import ConversationHandler, ContextTypes
 
-cancel_keyboard = InlineKeyboardMarkup([[InlineKeyboardButton('🚫 Відмінити', callback_data='cancel')]])
+cancel_keyboard = InlineKeyboardMarkup(
+    [[InlineKeyboardButton('🚫 Відмінити', callback_data='cancel')]])
 logger = logging.getLogger(__name__)
 
 

@@ -19,7 +19,8 @@ SETTINGS_START, CITY_SETTINGS, TIMEZONE_SETTINGS, CRYPTO_SETTINGS, CURR_SETTINGS
 
 main_settings_keyboard = InlineKeyboardMarkup([
     [InlineKeyboardButton('Місто 🏙️', callback_data='city_settings')],
-    [InlineKeyboardButton('Часовий пояс 🌐', callback_data='timezone_settings')],
+    [InlineKeyboardButton(
+        'Часовий пояс 🌐', callback_data='timezone_settings')],
     [InlineKeyboardButton('Крипто валюти 🪙', callback_data='crypto_settings')],
     [InlineKeyboardButton('Фіатні валюти 🇺🇦', callback_data='curr_settings')],
     [InlineKeyboardButton('🚫 Відмінити', callback_data='cancel')]
@@ -123,7 +124,8 @@ async def city_settings_change(update: Update, context: ContextTypes.DEFAULT_TYP
         approve_keyboard = InlineKeyboardMarkup([
             [InlineKeyboardButton(f'Змінити на "{UserTime.offset_repr(city_timezone_offset)}"',
                                   callback_data='change_to_city')],
-            [InlineKeyboardButton('Детальні налаштування 🌐', callback_data='change')],
+            [InlineKeyboardButton('Детальні налаштування 🌐',
+                                  callback_data='change')],
             [InlineKeyboardButton('🚫 Відмінити', callback_data='cancel')]
         ])
 
@@ -368,10 +370,14 @@ settings_conversation_handler = ConversationHandler(
     states={
         SETTINGS_START: [
             CallbackQueryHandler(cancel, pattern='^cancel$'),
-            CallbackQueryHandler(city_settings_start, pattern='^city_settings$'),
-            CallbackQueryHandler(timezone_settings_start, pattern='^timezone_settings$'),
-            CallbackQueryHandler(crypto_settings_start, pattern='^crypto_settings$'),
-            CallbackQueryHandler(curr_settings_start, pattern='^curr_settings$')
+            CallbackQueryHandler(city_settings_start,
+                                 pattern='^city_settings$'),
+            CallbackQueryHandler(timezone_settings_start,
+                                 pattern='^timezone_settings$'),
+            CallbackQueryHandler(crypto_settings_start,
+                                 pattern='^crypto_settings$'),
+            CallbackQueryHandler(curr_settings_start,
+                                 pattern='^curr_settings$')
         ],
         CITY_SETTINGS: [
             CallbackQueryHandler(cancel, pattern='^cancel$'),
@@ -379,7 +385,8 @@ settings_conversation_handler = ConversationHandler(
         ],
         TIMEZONE_SETTINGS: [
             CallbackQueryHandler(cancel, pattern='^cancel$'),
-            CallbackQueryHandler(change_timezone_to_city, pattern='^change_to_city$'),
+            CallbackQueryHandler(change_timezone_to_city,
+                                 pattern='^change_to_city$'),
             MessageHandler(filters.TEXT, user_timezone_change)
         ],
         CRYPTO_SETTINGS: [

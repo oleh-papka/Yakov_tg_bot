@@ -97,4 +97,5 @@ async def days_passed(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
     await message.reply_text(msg, quote=True)
 
 
-days_passed_handler = MessageHandler(filters.Regex(from_date_regex) | filters.Regex(from_to_date_regex), days_passed)
+days_passed_handler = MessageHandler(filters.Regex(
+    from_date_regex) | filters.Regex(from_to_date_regex), days_passed)

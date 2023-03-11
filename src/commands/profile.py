@@ -30,8 +30,10 @@ async def profile(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
     if user.id == Config.OWNER_ID:
         additional_keys = [
-            InlineKeyboardButton('Написати усім 💬', callback_data='send_to_all'),
-            InlineKeyboardButton('Тестувальнику 👤', callback_data='send_to_tester')
+            InlineKeyboardButton(
+                'Написати усім 💬', callback_data='send_to_all'),
+            InlineKeyboardButton(
+                'Тестувальнику 👤', callback_data='send_to_tester')
         ]
         resp_keyboard.insert(1, additional_keys)
 
@@ -148,7 +150,8 @@ async def send_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
                 decr -= 1
 
             number += decr
-            tmp_msg = sending_text + f'\n\nНадіслано {number + 1} із {users_count}'
+            tmp_msg = sending_text + \
+                f'\n\nНадіслано {number + 1} із {users_count}'
             await query.edit_message_text(tmp_msg)
 
         sending_text = f'✅ Єєєєй! Уже завершив, усі ({users_count}) користувачі отримали твоє повідомлення.'

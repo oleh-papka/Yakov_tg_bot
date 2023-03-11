@@ -49,7 +49,8 @@ async def create_user(session: AsyncSession, user: telegram.User) -> models.User
 async def update_user(session: AsyncSession, user: telegram.User, user_data: dict) -> None:
     """Update specific parameter for user"""
 
-    update_query = update(models.User).where(models.User.id == user.id).values(user_data)
+    update_query = update(models.User).where(
+        models.User.id == user.id).values(user_data)
 
     await session.execute(update_query)
     await session.commit()

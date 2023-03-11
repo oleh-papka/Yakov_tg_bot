@@ -37,7 +37,8 @@ class UserTime(datetime):
         """Returns date in 'YYYY-MM-DD' format"""
 
         if custom_separator:
-            resp = self.dt.strftime(f'%d{custom_separator}%m{custom_separator}%Y')
+            resp = self.dt.strftime(
+                f'%d{custom_separator}%m{custom_separator}%Y')
         else:
             if style_flag:
                 resp = self.dt.strftime('%d.%m.%Y')

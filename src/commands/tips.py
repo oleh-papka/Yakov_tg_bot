@@ -69,4 +69,5 @@ async def successful_payment(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
 tip_developer_handler = CommandHandler("tip_developer", tip_developer)
 precheckout_handler = PreCheckoutQueryHandler(payment_precheckout)
-successful_payment_handler = MessageHandler(filters.SUCCESSFUL_PAYMENT, successful_payment)
+successful_payment_handler = MessageHandler(
+    filters.SUCCESSFUL_PAYMENT, successful_payment)

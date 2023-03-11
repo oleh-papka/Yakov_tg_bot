@@ -90,11 +90,13 @@ class OpenWeatherMapAPI:
         if resp.ok:
             return resp.json()
         else:
-            raise WeatherFetchError(f'Cannot fetch weather data about city  with coordinates: "{lat}", "{lon}"')
+            raise WeatherFetchError(
+                f'Cannot fetch weather data about city  with coordinates: "{lat}", "{lon}"')
 
     @staticmethod
     def compose_msg(city_model: City, user_time: UserTime) -> str:
-        weather_data = OpenWeatherMapAPI.get_weather(city_model.lat, city_model.lon)
+        weather_data = OpenWeatherMapAPI.get_weather(
+            city_model.lat, city_model.lon)
 
         temp = Temperature(weather_data)
         offset = weather_data['timezone_offset']

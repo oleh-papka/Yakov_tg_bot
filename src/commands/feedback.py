@@ -90,9 +90,9 @@ async def feedback_reply_text(update: Update, context: ContextTypes.DEFAULT_TYPE
     response_text += f"Ще раз дякую за фідбек 🙃"
 
     await context.bot.send_message(chat_id=feedback_reply_user_id,
-                             text=response_text,
-                             parse_mode=ParseMode.MARKDOWN_V2,
-                             reply_to_message_id=feedback_reply_msg_id)
+                                   text=response_text,
+                                   parse_mode=ParseMode.MARKDOWN_V2,
+                                   reply_to_message_id=feedback_reply_msg_id)
 
     async with get_session() as session:
         await mark_feedback_read(session, feedback_reply_msg_id)
@@ -118,7 +118,8 @@ feedback_handler = ConversationHandler(
 )
 
 feedback_reply_handler = ConversationHandler(
-    entry_points=[MessageHandler(filters.Regex(re.compile(r'/reply_feedback_\d+')), feedback_reply)],
+    entry_points=[MessageHandler(filters.Regex(
+        re.compile(r'/reply_feedback_\d+')), feedback_reply)],
     states={
         REPLY_START: [
             MessageHandler(filters.Regex(re.compile(r'^/cancel$')), cancel),

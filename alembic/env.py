@@ -23,7 +23,8 @@ config.set_main_option("sqlalchemy.url", load_env_variable('DB_URL'))
 # Function below configures how revision file names would be displayed
 def process_revision_directives(context, revision, directives):
     migration_script = directives[0]
-    head_revision = ScriptDirectory.from_config(context.config).get_current_head()
+    head_revision = ScriptDirectory.from_config(
+        context.config).get_current_head()
 
     if head_revision is None:
         new_rev_id = 1

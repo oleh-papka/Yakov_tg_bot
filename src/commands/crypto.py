@@ -28,7 +28,8 @@ async def crypto_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         await message.reply_text(error_text)
         return
     else:
-        time = UserTime.get_time_from_offset(user_model.timezone_offset)['date_time']
+        time = UserTime.get_time_from_offset(
+            user_model.timezone_offset)['date_time']
         crypto_text = f'CoinMarketCup дані на (*{time}*):\n\n'
         crypto_text += compose_crypto_msg(*crypto_data, coins=coins)
         await message.reply_markdown_v2(escape_md2(crypto_text, exclude=['*', '_']))
