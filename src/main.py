@@ -58,7 +58,14 @@ def main() -> None:
     application.add_error_handler(error_handler)
     application.add_handler(MessageHandler(filters.ALL, unknown_messages))
 
-    application.run_polling()
+    if Config.WEBHOOK_FLAG:
+        application.run_webhook(
+            listen="0.0.0.0",
+            port=Config.BOT_PORT,
+            webhook_url=Config.BOT_LINK
+        )
+    else:
+        application.run_polling()
 
 
 if __name__ == '__main__':
