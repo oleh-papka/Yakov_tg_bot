@@ -21,18 +21,12 @@ from src.config import Config
 from src.handlers import (error_handler,
                           unknown_messages,
                           days_passed_handler)
-from src.utils.db_utils import check_db
 
 logger = logging.getLogger(__name__)
 
 
 def main() -> None:
     application = Application.builder().token(Config.BOT_TOKEN).build()
-
-    # Check DB
-    if not check_db():
-        logger.critical("DB not found!")
-        exit()
 
     # Register commands
     application.add_handler(start_command_handler)
