@@ -40,7 +40,7 @@ class Config:
 
     SPACING = '⠀⠀  '  # Main whitespace characters used in formatting
 
-    BOT_VERSION = 'v0.1.0'
+    BOT_VERSION = 'v0.1.1'
 
     BOT_COMMANDS = [
         ('weather', 'Погода'),
