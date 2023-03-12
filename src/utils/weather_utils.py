@@ -155,10 +155,10 @@ class OpenWeatherMapAPI:
                 else:
                     output += f'{emoji} {weather} {start.time_repr()}\n'
 
-        output += f'\n🌡️ Температура: \(зараз {temp.now}℃\)\n'
+        output += f'\n🌡️ Температура: \\(зараз {temp.now}℃\\)\n'
         output += (f'{Config.SPACING}мін: {temp.min}℃\n'
                    f'{Config.SPACING}макс: {temp.max}℃\n\n')
-        output += f'😶 Відчувається: \(зараз {temp.feels.now}℃\)\n'
+        output += f'😶 Відчувається: \\(зараз {temp.feels.now}℃\\)\n'
 
         if user_time.hour <= 10:
             output += f'{Config.SPACING}ранок: {temp.feels.morn}℃\n'
@@ -173,7 +173,9 @@ class OpenWeatherMapAPI:
         output += (f'🌅 Схід: {sunrise.time_repr()}, '
                    f'🌆 Захід: {sunset.time_repr()}')
 
-        output += '\n\nДля того, щоб отримувати картинку замість тексту, потрібні грошики)'
+        output += (f'\n\n\nP.S. Для того, щоб отримувати картинку замість тексту, потрібні грошики💸, тому її немає.\n\n'
+                   f'P.P.S. Проте можеш поглянути на картинку [тут]({city_model.sinoptik_url}).')
+
         return output
 
 

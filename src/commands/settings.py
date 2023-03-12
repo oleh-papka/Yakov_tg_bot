@@ -141,12 +141,13 @@ async def change_timezone_to_city(update: Update, context: ContextTypes.DEFAULT_
 
     async with get_session() as session:
         user_model = await get_user_by_id(session, user.id)
-        users_city = user_model.city
-        timezone_offset = users_city.timezone_offset
+        users_city_model = user_model.city
+        timezone_offset = users_city_model.timezone_offset
+        city_name = users_city_model.local_name
         await update_user(session, user, {'timezone_offset': timezone_offset})
 
     timezone_changed_text = (f'✅ Зроблено, твій часовий пояс тепер відповідає вказаному місту '
-                             f'{users_city.name} ({UserTime.offset_repr(timezone_offset)}).')
+                             f'{city_name} ({UserTime.offset_repr(timezone_offset)}).')
     await query.edit_message_text(text=timezone_changed_text, reply_markup=None)
 
     context.user_data.clear()
