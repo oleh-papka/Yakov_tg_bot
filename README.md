@@ -11,7 +11,7 @@ P.P.S. You can try it [here](https://t.me/Yakov_the_bot).
 ### Features:
 - Weather forecast for users city
 - Crypto and fiat currency markets changes
-- Casualties in russian war (russia is the terrorist state💩)
+- Casualties in russian war (russia is the terrorist state)
 - Simple date calculator
 
 ## Setup bot
