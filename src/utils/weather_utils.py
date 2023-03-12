@@ -2,10 +2,10 @@ from urllib.parse import quote, unquote
 
 import requests
 
-from config import Config
-from models import City
-from models.errors import CityFetchError, WeatherFetchError, ScreenshotAPIError, SinoptikURLFetchError
-from utils.time_utils import UserTime
+from src.config import Config
+from src.models import City
+from src.models.errors import CityFetchError, WeatherFetchError, SinoptikURLFetchError, ScreenshotAPIError
+from src.utils.time_utils import UserTime
 
 
 class TemperatureFeels:
@@ -42,8 +42,15 @@ class OpenWeatherMapAPI:
         city_data = {}
 
         if geo_resp.ok:
-            geo_data = geo_resp.json()[0]
+            try:
+                geo_data = geo_resp.json()[0]
+            except:
+                raise CityFetchError(f'Cannot fetch general info data about city: "{city_name}"')
+
             local_names = geo_data.get('local_names')
+            if not local_names:
+                raise CityFetchError(f'Cannot fetch general info data about city: "{city_name}"')
+
             local_name = local_names.get('uk') or local_names.get('ru')
 
             city_data |= {
@@ -53,9 +60,7 @@ class OpenWeatherMapAPI:
                 'lon': geo_data.get('lon')
             }
         else:
-            raise CityFetchError(
-                f'Cannot fetch geo data about city: "{city_name}"'
-            )
+            raise CityFetchError(f'Cannot fetch geo data about city: "{city_name}"')
 
         # Get city id, timezone
         weather_url = (
@@ -71,9 +76,7 @@ class OpenWeatherMapAPI:
                 'timezone_offset': weather_data['timezone']
             }
         else:
-            raise CityFetchError(
-                f'Cannot fetch general info data about city: "{city_name}"'
-            )
+            raise CityFetchError(f'Cannot fetch general info data about city: "{city_name}"')
 
         return city_data
 
@@ -155,10 +158,10 @@ class OpenWeatherMapAPI:
                 else:
                     output += f'{emoji} {weather} {start.time_repr()}\n'
 
-        output += f'\n🌡️ Температура: \(зараз {temp.now}℃\)\n'
+        output += f'\n🌡️ Температура: \\(зараз {temp.now}℃\\)\n'
         output += (f'{Config.SPACING}мін: {temp.min}℃\n'
                    f'{Config.SPACING}макс: {temp.max}℃\n\n')
-        output += f'😶 Відчувається: \(зараз {temp.feels.now}℃\)\n'
+        output += f'😶 Відчувається: \\(зараз {temp.feels.now}℃\\)\n'
 
         if user_time.hour <= 10:
             output += f'{Config.SPACING}ранок: {temp.feels.morn}℃\n'
@@ -173,7 +176,9 @@ class OpenWeatherMapAPI:
         output += (f'🌅 Схід: {sunrise.time_repr()}, '
                    f'🌆 Захід: {sunset.time_repr()}')
 
-        output += '\n\nДля того, щоб отримувати картинку замість тексту, потрібні грошики)'
+        output += (f'\n\n\nP.S. Для того, щоб отримувати картинку замість тексту, потрібні грошики💸, тому її немає.\n\n'
+                   f'P.P.S. Проте можеш поглянути на картинку [тут]({city_model.sinoptik_url}).')
+
         return output
 
 
@@ -208,8 +213,7 @@ class ScreenshotAPI:
         if resp.ok:
             return resp
         else:
-            raise ScreenshotAPIError(
-                f'Cannot get screenshot for city with url: "{sinoptik_url}"')
+            raise ScreenshotAPIError(f'Cannot get screenshot for city with url: "{sinoptik_url}"')
 
 
 def get_emoji(weather_cond: str,
