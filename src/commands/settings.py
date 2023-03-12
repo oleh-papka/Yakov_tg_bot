@@ -9,7 +9,7 @@ from src.crud.city import create_city, get_city_by_name
 from src.crud.crypto_currency import get_crypto_by_user_id, get_crypto_by_abbr
 from src.crud.currency import get_curr_by_user_id, get_curr_by_name
 from src.crud.user import create_or_update_user, get_user_by_id, update_user
-from src.handlers.canel_conversation import cancel, cancel_keyboard
+from src.handlers.canel_conversation import cancel, cancel_back_keyboard
 from src.models.errors import CityFetchError
 from src.utils.db_utils import get_session
 from src.utils.time_utils import UserTime
@@ -41,6 +41,17 @@ async def settings(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     return SETTINGS_START
 
 
+async def back_to_settings(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    query = update.callback_query
+    await query.answer()
+
+    settings_start_text = 'Шукаєш щось інше?\nОбери з нижче наведених опцій:'
+
+    await query.edit_message_text(text=settings_start_text, reply_markup=main_settings_keyboard)
+
+    return SETTINGS_START
+
+
 async def city_settings_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     query = update.callback_query
     user = update.effective_user
@@ -60,7 +71,7 @@ async def city_settings_start(update: Update, context: ContextTypes.DEFAULT_TYPE
                             'Надішли мені назву міста або пряме посилання на нього з ua.sinoptik.ua '
                             'у наступному повідомленні, щоб встановити відповідне.')
 
-    context.user_data['markup_msg'] = await message.edit_text(text=city_change_text, reply_markup=cancel_keyboard)
+    context.user_data['markup_msg'] = await message.edit_text(text=city_change_text, reply_markup=cancel_back_keyboard)
 
     return CITY_SETTINGS
 
@@ -76,12 +87,13 @@ async def city_settings_change(update: Update, context: ContextTypes.DEFAULT_TYP
     try:
         city_data = OpenWeatherMapAPI.get_city(user_input)
     except CityFetchError:
-        city_not_found_text = '⚠ Cхоже назва міста вказана не вірно(або я дурний), бо не можу занйти такого міста.'
+        city_not_found_text = ('⚠ Cхоже назва міста вказана не вірно(або я дурний), бо не можу занйти такого міста.'
+                               '\n\nСпробуй ще раз нижче')
 
         context.user_data['markup_msg'] = await message.reply_text(city_not_found_text,
-                                                                   reply_markup=main_settings_keyboard,
+                                                                   reply_markup=cancel_back_keyboard,
                                                                    quote=True)
-        return SETTINGS_START
+        return CITY_SETTINGS
 
     async with get_session() as session:
         user_model = await get_user_by_id(session, user.id)
@@ -89,13 +101,13 @@ async def city_settings_change(update: Update, context: ContextTypes.DEFAULT_TYP
 
     city_name_local = city_data['local_name']
     city_name_eng = city_data['name']
-    city_change_text = f'✅ Зроблено, твоє місто тепер - {city_name_local}.'
+    city_change_text = f'✅ Зроблено, твоє місто тепер - {city_name_local}.\n\nЩось ще?'
 
     if users_city_model and users_city_model.name == city_name_eng:
-        city_change_text = '❕ Так це ж те саме місто, жодних змін не вношу 🙃'
+        city_change_text = '❕ Так це ж те саме місто, жодних змін не вношу 🙃\n\nЩось ще?'
 
         await message.reply_text(city_change_text, reply_markup=main_settings_keyboard)
-        return ConversationHandler.END
+        return SETTINGS_START
 
     sinoptik_base_url = SinoptikScraper.get_url(city_name_local)
     city_timezone_offset = city_data['timezone_offset']
@@ -116,9 +128,12 @@ async def city_settings_change(update: Update, context: ContextTypes.DEFAULT_TYP
 
         await update_user(session, user, {'city_id': city_model.id})
 
-    city_changed_message = await message.reply_text(city_change_text, reply_to_message_id=message.message_id)
+    city_changed_message = await message.reply_text(city_change_text,
+                                                    reply_to_message_id=message.message_id,
+                                                    reply_markup=main_settings_keyboard)
 
     if city_timezone_offset and (city_timezone_offset != user_model.timezone_offset):
+        city_change_text = city_change_text.replace('\n\nЩось ще?', '')
         city_change_text += '\n\n❕ У тебе і цього міста різні часові пояси, змінити на відповідний місту часовий пояс?'
         approve_keyboard = InlineKeyboardMarkup([
             [InlineKeyboardButton(f'Змінити на "{UserTime.offset_repr(city_timezone_offset)}"',
@@ -130,8 +145,12 @@ async def city_settings_change(update: Update, context: ContextTypes.DEFAULT_TYP
         await city_changed_message.edit_text(city_change_text, reply_markup=approve_keyboard)
         return TIMEZONE_SETTINGS
 
+    command_msg = context.user_data.get('command_msg')
     context.user_data.clear()
-    return ConversationHandler.END
+    context.user_data['command_msg'] = command_msg
+    context.user_data['markup_msg'] = markup_msg
+
+    return SETTINGS_START
 
 
 async def change_timezone_to_city(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -147,11 +166,17 @@ async def change_timezone_to_city(update: Update, context: ContextTypes.DEFAULT_
         await update_user(session, user, {'timezone_offset': timezone_offset})
 
     timezone_changed_text = (f'✅ Зроблено, твій часовий пояс тепер відповідає вказаному місту '
-                             f'{city_name} ({UserTime.offset_repr(timezone_offset)}).')
-    await query.edit_message_text(text=timezone_changed_text, reply_markup=None)
+                             f'{city_name} ({UserTime.offset_repr(timezone_offset)}).'
+                             f'\n\n Щось ще?')
+    await query.edit_message_text(text=timezone_changed_text, reply_markup=main_settings_keyboard)
 
+    command_msg = context.user_data.get('command_msg')
+    markup_msg = context.user_data.get('markup_msg')
     context.user_data.clear()
-    return ConversationHandler.END
+    context.user_data['command_msg'] = command_msg
+    context.user_data['markup_msg'] = markup_msg
+
+    return SETTINGS_START
 
 
 async def timezone_settings_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -177,7 +202,7 @@ async def timezone_settings_start(update: Update, context: ContextTypes.DEFAULT_
                              f'{UserTime.offset_repr(user_model.timezone_offset)}\n\n'
                              f'Для зміни часового поясу надішли відповідний у наступному повідомленні (Приклад: +3).')
 
-    await message.edit_text(text=timezone_change_text, reply_markup=cancel_keyboard)
+    await message.edit_text(text=timezone_change_text, reply_markup=cancel_back_keyboard)
 
     return TIMEZONE_SETTINGS
 
@@ -195,17 +220,22 @@ async def user_timezone_change(update: Update, context: ContextTypes.DEFAULT_TYP
     else:
         timezone_change_error_text = '⚠ Cхоже часовий пояс вказано не вірно, спробуй ще раз.'
         context.user_data['markup_msg'] = await message.reply_text(text=timezone_change_error_text,
-                                                                   reply_markup=cancel_keyboard)
+                                                                   reply_markup=cancel_back_keyboard)
         return TIMEZONE_SETTINGS
 
     async with get_session() as session:
         await update_user(session, user, {'timezone_offset': timezone_offset})
 
-    timezone_change_text = f'✅ Зроблено, твій часовий пояс тепер {UserTime.offset_repr(timezone_offset)}'
-    await message.reply_text(text=timezone_change_text, reply_markup=None)
+    timezone_change_text = (f'✅ Зроблено, твій часовий пояс тепер {UserTime.offset_repr(timezone_offset)}'
+                            f'\n\nЩось ще?')
+    await message.reply_text(text=timezone_change_text, reply_markup=main_settings_keyboard)
 
+    command_msg = context.user_data.get('command_msg')
     context.user_data.clear()
-    return ConversationHandler.END
+    context.user_data['command_msg'] = command_msg
+    context.user_data['markup_msg'] = markup_msg
+
+    return SETTINGS_START
 
 
 def compose_crypto_keyboard(data: list | None = None):
@@ -229,6 +259,7 @@ def compose_crypto_keyboard(data: list | None = None):
             InlineKeyboardButton(f'DOGE {doge}', callback_data='DOGE'),
             InlineKeyboardButton(f'SOL {sol}', callback_data='SOL'),
         ],
+        [InlineKeyboardButton('🔙 Назад', callback_data='back')],
         [InlineKeyboardButton('🚫 Відмінити', callback_data='cancel')]
     ])
 
@@ -304,6 +335,7 @@ def compose_curr_keyboard(data: list | None = None):
             InlineKeyboardButton(f'PLN {pln}', callback_data='pln'),
             InlineKeyboardButton(f'GBP {gbp}', callback_data='gbp'),
         ],
+        [InlineKeyboardButton('🔙 Назад', callback_data='back')],
         [InlineKeyboardButton('🚫 Відмінити', callback_data='cancel')]
     ])
 
@@ -376,19 +408,23 @@ settings_conversation_handler = ConversationHandler(
         ],
         CITY_SETTINGS: [
             CallbackQueryHandler(cancel, pattern='^cancel$'),
+            CallbackQueryHandler(back_to_settings, pattern='^back$'),
             MessageHandler(filters.TEXT, city_settings_change)
         ],
         TIMEZONE_SETTINGS: [
             CallbackQueryHandler(cancel, pattern='^cancel$'),
+            CallbackQueryHandler(back_to_settings, pattern='^back$'),
             CallbackQueryHandler(change_timezone_to_city, pattern='^change_to_city$'),
             MessageHandler(filters.TEXT, user_timezone_change)
         ],
         CRYPTO_SETTINGS: [
             CallbackQueryHandler(cancel, pattern='^cancel$'),
+            CallbackQueryHandler(back_to_settings, pattern='^back$'),
             CallbackQueryHandler(user_crypto_change, pattern=r'\w')
         ],
         CURR_SETTINGS: [
             CallbackQueryHandler(cancel, pattern='^cancel$'),
+            CallbackQueryHandler(back_to_settings, pattern='^back$'),
             CallbackQueryHandler(user_curr_change, pattern=r'\w')
         ]
     },

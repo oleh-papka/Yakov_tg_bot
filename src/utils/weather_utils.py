@@ -2,10 +2,10 @@ from urllib.parse import quote, unquote
 
 import requests
 
-from config import Config
-from models import City
-from models.errors import CityFetchError, WeatherFetchError, ScreenshotAPIError, SinoptikURLFetchError
-from utils.time_utils import UserTime
+from src.config import Config
+from src.models import City
+from src.models.errors import CityFetchError, WeatherFetchError, SinoptikURLFetchError, ScreenshotAPIError
+from src.utils.time_utils import UserTime
 
 
 class TemperatureFeels:
@@ -42,8 +42,15 @@ class OpenWeatherMapAPI:
         city_data = {}
 
         if geo_resp.ok:
-            geo_data = geo_resp.json()[0]
+            try:
+                geo_data = geo_resp.json()[0]
+            except:
+                raise CityFetchError(f'Cannot fetch general info data about city: "{city_name}"')
+
             local_names = geo_data.get('local_names')
+            if not local_names:
+                raise CityFetchError(f'Cannot fetch general info data about city: "{city_name}"')
+
             local_name = local_names.get('uk') or local_names.get('ru')
 
             city_data |= {
@@ -53,9 +60,7 @@ class OpenWeatherMapAPI:
                 'lon': geo_data.get('lon')
             }
         else:
-            raise CityFetchError(
-                f'Cannot fetch geo data about city: "{city_name}"'
-            )
+            raise CityFetchError(f'Cannot fetch geo data about city: "{city_name}"')
 
         # Get city id, timezone
         weather_url = (
@@ -71,9 +76,7 @@ class OpenWeatherMapAPI:
                 'timezone_offset': weather_data['timezone']
             }
         else:
-            raise CityFetchError(
-                f'Cannot fetch general info data about city: "{city_name}"'
-            )
+            raise CityFetchError(f'Cannot fetch general info data about city: "{city_name}"')
 
         return city_data
 
@@ -210,8 +213,7 @@ class ScreenshotAPI:
         if resp.ok:
             return resp
         else:
-            raise ScreenshotAPIError(
-                f'Cannot get screenshot for city with url: "{sinoptik_url}"')
+            raise ScreenshotAPIError(f'Cannot get screenshot for city with url: "{sinoptik_url}"')
 
 
 def get_emoji(weather_cond: str,
