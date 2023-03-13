@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 def main() -> None:
     application = Application.builder().token(Config.BOT_TOKEN).build()
 
-    # Check DB
+    # Check if DB exists DB
     if not check_db():
         logger.critical("DB not found!")
         exit()
