@@ -1,6 +1,6 @@
 import re
 
-from telegram import Update, Message
+from telegram import Update
 from telegram.constants import ParseMode
 from telegram.ext import filters, MessageHandler, ConversationHandler, CommandHandler, ContextTypes, \
     CallbackQueryHandler
