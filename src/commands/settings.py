@@ -87,7 +87,7 @@ async def city_settings_change(update: Update, context: ContextTypes.DEFAULT_TYP
     try:
         city_data = OpenWeatherMapAPI.get_city(user_input)
     except CityFetchError:
-        city_not_found_text = ('⚠ Cхоже назва міста вказана не вірно(або я дурний), бо не можу занйти такого міста.'
+        city_not_found_text = ('⚠ Cхоже назва міста вказана не вірно(або я дурний), бо не можу знайти такого міста.'
                                '\n\nСпробуй ще раз нижче')
 
         context.user_data['markup_msg'] = await message.reply_text(city_not_found_text,
@@ -138,17 +138,18 @@ async def city_settings_change(update: Update, context: ContextTypes.DEFAULT_TYP
         approve_keyboard = InlineKeyboardMarkup([
             [InlineKeyboardButton(f'Змінити на "{UserTime.offset_repr(city_timezone_offset)}"',
                                   callback_data='change_to_city')],
-            [InlineKeyboardButton('Детальні налаштування 🌐', callback_data='change')],
+            [InlineKeyboardButton('Детальні налаштування 🌐', callback_data='timezone_settings')],
             [InlineKeyboardButton('🚫 Відмінити', callback_data='cancel')]
         ])
 
-        await city_changed_message.edit_text(city_change_text, reply_markup=approve_keyboard)
+        context.user_data['markup_msg'] = await city_changed_message.edit_text(city_change_text,
+                                                                               reply_markup=approve_keyboard)
         return TIMEZONE_SETTINGS
 
     command_msg = context.user_data.get('command_msg')
     context.user_data.clear()
     context.user_data['command_msg'] = command_msg
-    context.user_data['markup_msg'] = markup_msg
+    context.user_data['markup_msg'] = city_changed_message
 
     return SETTINGS_START
 
@@ -186,7 +187,8 @@ async def timezone_settings_start(update: Update, context: ContextTypes.DEFAULT_
     markup_msg = context.user_data['markup_msg']
 
     await query.answer()
-    await markup_msg.edit_reply_markup(reply_markup=None)
+    if markup_msg:
+        await markup_msg.edit_reply_markup(reply_markup=None)
 
     async with get_session() as session:
         user_model = await get_user_by_id(session, user.id)
@@ -228,7 +230,7 @@ async def user_timezone_change(update: Update, context: ContextTypes.DEFAULT_TYP
 
     timezone_change_text = (f'✅ Зроблено, твій часовий пояс тепер {UserTime.offset_repr(timezone_offset)}'
                             f'\n\nЩось ще?')
-    await message.reply_text(text=timezone_change_text, reply_markup=main_settings_keyboard)
+    markup_msg = await message.reply_text(text=timezone_change_text, reply_markup=main_settings_keyboard)
 
     command_msg = context.user_data.get('command_msg')
     context.user_data.clear()
@@ -415,6 +417,7 @@ settings_conversation_handler = ConversationHandler(
             CallbackQueryHandler(cancel, pattern='^cancel$'),
             CallbackQueryHandler(back_to_settings, pattern='^back$'),
             CallbackQueryHandler(change_timezone_to_city, pattern='^change_to_city$'),
+            CallbackQueryHandler(timezone_settings_start, pattern='^timezone_settings$'),
             MessageHandler(filters.TEXT, user_timezone_change)
         ],
         CRYPTO_SETTINGS: [
