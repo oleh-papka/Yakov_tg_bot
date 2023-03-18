@@ -1,3 +1,4 @@
+import re
 from urllib.parse import quote, unquote
 
 import requests
@@ -194,6 +195,15 @@ class SinoptikScraper:
             return base_url
         else:
             raise SinoptikURLFetchError
+
+    @staticmethod
+    def check_url(url: str) -> str | None:
+        sinoptik_url_pattern = r'^https://ua.sinoptik.ua/*.'
+
+        if re.match(sinoptik_url_pattern, url):
+            return unquote(url)
+
+        return None
 
 
 class ScreenshotAPI:

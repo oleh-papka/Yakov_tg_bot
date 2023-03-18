@@ -82,10 +82,15 @@ async def city_settings_change(update: Update, context: ContextTypes.DEFAULT_TYP
     markup_msg = context.user_data['markup_msg']
 
     await markup_msg.edit_reply_markup(reply_markup=None)
-    user_input = message.text.strip().capitalize()
+    user_input = message.text.strip()
 
     try:
-        city_data = OpenWeatherMapAPI.get_city(user_input)
+        if url := SinoptikScraper.check_url(user_input):
+            city_name = re.sub(r'https://ua.sinoptik.ua/погода-', '', url)
+            city_name_no_digits = re.sub(r'-\d+', '', city_name)
+            city_data = OpenWeatherMapAPI.get_city(city_name_no_digits)
+        else:
+            city_data = OpenWeatherMapAPI.get_city(user_input)
     except CityFetchError:
         city_not_found_text = ('⚠ Cхоже назва міста вказана не вірно(або я дурний), бо не можу знайти такого міста.'
                                '\n\nСпробуй ще раз нижче')
@@ -109,7 +114,7 @@ async def city_settings_change(update: Update, context: ContextTypes.DEFAULT_TYP
         await message.reply_text(city_change_text, reply_markup=main_settings_keyboard)
         return SETTINGS_START
 
-    sinoptik_base_url = SinoptikScraper.get_url(city_name_local)
+    sinoptik_base_url = url if url else SinoptikScraper.get_url(city_name_local)
     city_timezone_offset = city_data['timezone_offset']
 
     async with get_session() as session:
