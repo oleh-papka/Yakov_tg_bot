@@ -197,13 +197,13 @@ class SinoptikScraper:
             raise SinoptikURLFetchError
 
     @staticmethod
-    def check_url(url: str) -> None | str:
+    def check_url(url: str) -> str | None:
         sinoptik_url_pattern = r'^https://ua.sinoptik.ua/*.'
 
         if re.match(sinoptik_url_pattern, url):
             return unquote(url)
 
-        return
+        return None
 
 
 class ScreenshotAPI:
