@@ -176,8 +176,9 @@ class OpenWeatherMapAPI:
         output += (f'🌅 Схід: {sunrise.time_repr()}, '
                    f'🌆 Захід: {sunset.time_repr()}')
 
-        output += (f'\n\n\nP.S. Для того, щоб отримувати картинку замість тексту, потрібні грошики💸, тому її немає.\n\n'
-                   f'P.P.S. Проте можеш поглянути на картинку [тут]({city_model.sinoptik_url}).')
+        output += (f'\n\n\nP.S. Якщо картинки із погодою немає напиши розробнику /feedback , '
+                   f'але спершу спробуй поглянути на картинку [тут]({city_model.sinoptik_url}), '
+                   f'можливо твоє посилання не дійсне.')
 
         return output
 
@@ -203,10 +204,10 @@ class ScreenshotAPI:
 
         sinoptik_url = quote(sinoptik_url)
 
-        url = (f'https://shot.screenshotapi.net/screenshot?token='
-               f'{Config.SCREENSHOT_API_TOKEN}&url={sinoptik_url}&width=1920'
-               f'&height=1080&output=image&file_type=png&block_ads=true&'
-               f'wait_for_event=load&selector=.tabsContentInner')
+        url = (f'https://api.screenshotone.com/take?access_key={Config.SCREENSHOT_API_TOKEN}'
+               f'&url={sinoptik_url}&viewport_width=1920&viewport_height=1080&device_scale_factor=1&'
+               f'format=png&block_ads=true&block_cookie_banners=true&block_trackers=true&cache=false'
+               f'&selector=.tabsContentInner')
 
         resp = requests.get(url)
 

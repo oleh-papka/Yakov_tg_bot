@@ -1,11 +1,12 @@
 from telegram import Update
+from telegram.constants import ParseMode
 from telegram.ext import ContextTypes, CommandHandler
 
 from src.crud.user import create_or_update_user, get_user_by_id
 from src.utils import escape_md2_no_links
 from src.utils.db_utils import get_session
 from src.utils.time_utils import UserTime
-from src.utils.weather_utils import OpenWeatherMapAPI
+from src.utils.weather_utils import OpenWeatherMapAPI, ScreenshotAPI
 
 
 async def weather(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -28,20 +29,20 @@ async def weather(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
     user_time = UserTime(offset=user_model.timezone_offset)
 
-    # if user_time.next_day_flag:
-    #     date = user_time.tomorrow.date_repr()
-    # else:
-    #     date = user_time.date_repr()
+    if user_time.next_day_flag:
+        date = user_time.tomorrow.date_repr()
+    else:
+        date = user_time.date_repr()
 
-    # if sinoptik_url := users_city_model.sinoptik_url:
-    #     if picture := ScreenshotAPI.get_photo(sinoptik_url, date):
-    #         date_verbose = 'завтра' if user_time.next_day_flag else 'сьогодні'
-    #         took_from_text = (f'Погода {users_city_model.local_name}, {date_verbose}\('
-    #                           f'{user_time.date_repr(True)}\), взяв [тут]({sinoptik_url}).')
-    #
-    #         caption = escape_md2_no_links(took_from_text)
-    #         await message.reply_photo(picture.content, caption=caption, parse_mode=ParseMode.MARKDOWN_V2)
-    #         return
+    if sinoptik_url := users_city_model.sinoptik_url:
+        if picture := ScreenshotAPI.get_photo(sinoptik_url, date):
+            date_verbose = 'завтра' if user_time.next_day_flag else 'сьогодні'
+            took_from_text = (f'Погода {users_city_model.local_name}, {date_verbose}\('
+                              f'{user_time.date_repr(True)}\), взяв [тут]({sinoptik_url}).')
+
+            caption = escape_md2_no_links(took_from_text)
+            await message.reply_photo(picture.content, caption=caption, parse_mode=ParseMode.MARKDOWN_V2)
+            return
 
     weather_text = OpenWeatherMapAPI.compose_msg(users_city_model, user_time)
     await message.reply_markdown_v2(escape_md2_no_links(weather_text), disable_web_page_preview=True)
