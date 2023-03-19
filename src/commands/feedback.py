@@ -27,6 +27,12 @@ feedback_start_keyboard = InlineKeyboardMarkup([
     [InlineKeyboardButton('🚫 Відмінити', callback_data='cancel')]
 ])
 
+make_issue_keyboard = InlineKeyboardMarkup([
+    [InlineKeyboardButton('Instant Issue 📑', callback_data='instant_issue')],
+    [InlineKeyboardButton('Відповісти користувачу 💬', callback_data='reply_to')],
+    [InlineKeyboardButton('🚫 Відмінити', callback_data='cancel')]
+])
+
 
 async def start_feedback_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     message = update.message
@@ -126,11 +132,6 @@ async def reply_feedback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         context.user_data['feedback_model'] = feedback_model
         response_text = "Зробимо issue з цього bug report? Або ж напиши текст цієї issue нижче:"
 
-        make_issue_keyboard = InlineKeyboardMarkup([
-            [InlineKeyboardButton('Instant Issue 📑', callback_data='instant_issue')],
-            [InlineKeyboardButton('🚫 Відмінити', callback_data='cancel')]
-        ])
-
         context.user_data['markup_msg'] = await message.reply_text(response_text, reply_markup=make_issue_keyboard)
         return MAKE_ISSUE
 
@@ -143,6 +144,18 @@ async def reply_feedback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         context.user_data['markup_msg'] = await message.reply_markdown_v2(escape_md2_no_links(response_text, ['`']),
                                                                           reply_markup=cancel_keyboard)
         return REPLY_START
+
+
+async def back_to_making_issue(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    query = update.callback_query
+    await query.answer()
+
+    settings_start_text = ('Не те?\nОбери з нижче наведених опцій чи зробимо issue з цього bug report?'
+                           ' Або ж напиши текст для цієї issue нижче:')
+
+    await query.edit_message_text(text=settings_start_text, reply_markup=make_issue_keyboard)
+
+    return MAKE_ISSUE
 
 
 async def feedback_reply_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -189,13 +202,26 @@ async def make_instant_issue(update: Update, context: ContextTypes.DEFAULT_TYPE)
     return ConversationHandler.END
 
 
+async def reply_to(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    query = update.callback_query
+    message = query.message
+
+    await query.answer()
+
+    await message.edit_text('Ок, що тоді відпоівсти користувачу, надішли повідомлення нижче:',
+                            reply_markup=cancel_back_keyboard)
+
+    return REPLY_START
+
+
 async def write_issue(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     message = update.message
     text = message.text
 
     feedback_model = context.user_data['feedback_model']
+    markup_msg = context.user_data['markup_msg']
 
-    await message.edit_text('Опрацювання...')
+    await markup_msg.edit_reply_markup()
 
     async with get_session() as session:
         await mark_feedback_read(session, feedback_model.msg_id)
@@ -232,11 +258,13 @@ feedback_reply_handler = ConversationHandler(
     states={
         REPLY_START: [
             CallbackQueryHandler(cancel, pattern='^cancel$'),
+            CallbackQueryHandler(back_to_making_issue, pattern='^back$'),
             MessageHandler(filters.TEXT, feedback_reply_text)
         ],
         MAKE_ISSUE: [
             CallbackQueryHandler(cancel, pattern='^cancel$'),
             CallbackQueryHandler(make_instant_issue, pattern='^instant_issue$'),
+            CallbackQueryHandler(reply_to, pattern='^reply_to$'),
             MessageHandler(filters.TEXT, write_issue)
         ]
     },
