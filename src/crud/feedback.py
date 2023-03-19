@@ -53,3 +53,13 @@ async def create_feedback(session: AsyncSession,
                               read_flag=read_flag)
     session.add(feedback_model)
     await session.commit()
+
+
+async def get_unread_feedbacks(session: AsyncSession):
+    """Retrieve feedbacks from user_id"""
+
+    query = select(Feedback).where(Feedback.read_flag == False)
+    result = await session.execute(query)
+    feedbacks = result.scalars().all()
+
+    return feedbacks

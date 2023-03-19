@@ -6,6 +6,7 @@ from telegram.ext import ContextTypes, ConversationHandler, CommandHandler, Call
     filters
 
 from src.config import Config
+from src.crud.feedback import get_unread_feedbacks
 from src.crud.user import create_or_update_user, get_user_by_id, get_all_users, update_user
 from src.handlers.canel_conversation import cancel, cancel_keyboard
 from src.utils.db_utils import get_session
@@ -33,12 +34,15 @@ async def profile(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
             InlineKeyboardButton('Написати усім 💬', callback_data='send_to_all'),
             InlineKeyboardButton('Тестувальнику 👤', callback_data='send_to_tester')
         ]
+        feedback_key = [InlineKeyboardButton('Не прочитані feedbacks 📃', callback_data='get_feedbacks')]
+
         resp_keyboard.insert(1, additional_keys)
+        resp_keyboard.insert(2, feedback_key)
 
     reply_keyboard = InlineKeyboardMarkup(resp_keyboard)
 
     profile_start_text = f'{user.name}, у цій команді багато трішки різного, обирай нижче:'
-    await message.reply_text(profile_start_text, reply_markup=reply_keyboard)
+    context.user_data['markup_msg'] = await message.reply_text(profile_start_text, reply_markup=reply_keyboard)
 
     return PROFILE_START
 
@@ -46,7 +50,10 @@ async def profile(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 async def user_data(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     query = update.callback_query
     user = update.effective_user
+    markup_msg = context.user_data['markup_msg']
     await query.answer()
+
+    await markup_msg.edit_reply_markup()
 
     async with get_session() as session:
         user_model = await get_user_by_id(session, user.id)
@@ -78,9 +85,39 @@ async def user_data(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     return ConversationHandler.END
 
 
+async def get_feedbacks(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    query = update.callback_query
+    markup_msg = context.user_data['markup_msg']
+    await query.answer()
+
+    await markup_msg.edit_reply_markup()
+
+    async with get_session() as session:
+        feedbacks_unread = await get_unread_feedbacks(session)
+
+    feedbacks_text = 'Ось усі не прочитані фідбеки:\n\n' if feedbacks_unread else 'Немає непрочитаних фідбеків!'
+
+    for feedback in feedbacks_unread:
+        feedbacks_text += f'/reply_feedback_{feedback.msg_id}'
+
+        if feedback.feedback_type == 'bug_report':
+            feedbacks_text += '  (bug report)'
+
+        feedbacks_text += '\n'
+
+    await query.edit_message_text(feedbacks_text)
+
+    context.user_data.clear()
+
+    return ConversationHandler.END
+
+
 async def send_to(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     query = update.callback_query
+    markup_msg = context.user_data['markup_msg']
     await query.answer()
+
+    await markup_msg.edit_reply_markup()
 
     send_to_text = '🆗 Гаразд, будемо сповіщати {}\n\nНадішли текст цього повідомлення нижче:'
 
@@ -182,6 +219,7 @@ profile_conversation_handler = ConversationHandler(
         PROFILE_START: [
             CallbackQueryHandler(cancel, pattern='^cancel$'),
             CallbackQueryHandler(send_to, pattern='^send_to'),
+            CallbackQueryHandler(get_feedbacks, pattern='^get_feedbacks$'),
             CallbackQueryHandler(user_data, pattern='^user_data$')
         ],
         GET_MESSAGE: [
