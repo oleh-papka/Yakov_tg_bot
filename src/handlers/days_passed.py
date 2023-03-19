@@ -38,7 +38,7 @@ def parse_date(msg: str) -> tuple | None:
 
         return datetime(year, month, day),
 
-    elif re.match(from_to_date_regex, msg):
+    if re.match(from_to_date_regex, msg):
         msg = re.sub(r'\s+', ' ', msg)
         r = msg.replace('.', ' ').replace('-', ' ').replace('/', ' ').split()
 
@@ -55,9 +55,8 @@ def parse_date(msg: str) -> tuple | None:
             date1, date2 = date2, date1
 
         return date1, date2
-
     else:
-        return
+        return None
 
 
 def compose_passed_days_msg(data: tuple, desc: str | None = None) -> str:

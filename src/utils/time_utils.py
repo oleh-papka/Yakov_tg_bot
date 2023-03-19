@@ -5,7 +5,7 @@ class UserTime(datetime):
     def __new__(cls, *args, **kwargs):
         if offset := kwargs.get('offset'):
             dt = datetime.now(timezone.utc) + timedelta(seconds=offset)
-        elif type(args[0]) == datetime:
+        elif type(args[0]) is datetime:
             dt = args[0]
         else:
             dt = datetime(*args, **kwargs)
