@@ -19,9 +19,13 @@ class Config:
     OWNER_ID = load_env_variable('OWNER_ID', int)  # Bot owner Telegram id
     TESTER_ID = load_env_variable('TESTER_ID', int, False)  # Bot tester Telegram id
 
+    DEVELOPER_GH_PROFILE = load_env_variable('DEVELOPER_GH_PROFILE')
+    BOT_GH_REPO = load_env_variable('BOT_GH_REPO')
+
     CMC_API_TOKEN = load_env_variable('CMC_API_TOKEN')  # CoinMarketCup API token
     SCREENSHOT_API_TOKEN = load_env_variable('SCREENSHOT_API_TOKEN')  # Screenshot api token
     OWM_API_TOKEN = load_env_variable('OWM_API_TOKEN')  # OpenWeatherMap API token
+    GITHUB_TOKEN = load_env_variable('GITHUB_TOKEN')    # GitHub API token
 
     DB_URL = load_env_variable('DB_URL')  # URL to your db
 

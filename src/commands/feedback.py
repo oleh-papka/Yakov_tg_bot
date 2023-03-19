@@ -16,9 +16,10 @@ from src.crud.feedback import (create_feedback,
 from src.crud.user import create_or_update_user
 from src.handlers.canel_conversation import cancel, cancel_keyboard, cancel_back_keyboard
 from src.utils.db_utils import get_session
+from src.utils.github_utils import create_issue
 from src.utils.message_utils import escape_md2, escape_md2_no_links
 
-FEEDBACK_START, GET_MESSAGE, REPLY_START = 1, 2, 3
+FEEDBACK_START, GET_MESSAGE, REPLY_START, MAKE_ISSUE = 1, 2, 3, 4
 
 feedback_start_keyboard = InlineKeyboardMarkup([
     [InlineKeyboardButton('Feedback 💬', callback_data='feedback'),
@@ -103,7 +104,7 @@ async def feedback_get_user_text(update: Update, context: ContextTypes.DEFAULT_T
     return ConversationHandler.END
 
 
-async def feedback_reply(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+async def reply_feedback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     message = update.message
     context.user_data['command_msg'] = message
 
@@ -121,15 +122,27 @@ async def feedback_reply(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     context.user_data['feedback_reply_msg_id'] = feedback_reply_msg_id
     context.user_data['feedback_reply_user_id'] = feedback_model.user_id
 
-    name = escape_md2(feedback_model.user.first_name)
+    if feedback_model.feedback_type == 'bug_report':
+        context.user_data['feedback_model'] = feedback_model
+        response_text = "Зробимо issue з цього bug report? Або ж напиши текст цієї issue нижче:"
 
-    response_text = (f'Пишемо відповідь користувачу [{name}](tg://user?id={feedback_model.user.id}):\n\n'
-                     f'{feedback_model.msg_text}\n\n')
+        make_issue_keyboard = InlineKeyboardMarkup([
+            [InlineKeyboardButton('Instant Issue 📑', callback_data='instant_issue')],
+            [InlineKeyboardButton('🚫 Відмінити', callback_data='cancel')]
+        ])
 
-    context.user_data['markup_msg'] = await message.reply_markdown_v2(escape_md2_no_links(response_text, ['`']),
-                                                                      reply_markup=cancel_keyboard)
+        context.user_data['markup_msg'] = await message.reply_text(response_text, reply_markup=make_issue_keyboard)
+        return MAKE_ISSUE
 
-    return REPLY_START
+    else:
+        name = escape_md2(feedback_model.user.first_name)
+
+        response_text = (f'Пишемо відповідь користувачу [{name}](tg://user?id={feedback_model.user.id}):\n\n'
+                         f'{feedback_model.msg_text}\n\n')
+
+        context.user_data['markup_msg'] = await message.reply_markdown_v2(escape_md2_no_links(response_text, ['`']),
+                                                                          reply_markup=cancel_keyboard)
+        return REPLY_START
 
 
 async def feedback_reply_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -160,6 +173,41 @@ async def feedback_reply_text(update: Update, context: ContextTypes.DEFAULT_TYPE
     return ConversationHandler.END
 
 
+async def make_instant_issue(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    query = update.callback_query
+    message = query.message
+    feedback_model = context.user_data['feedback_model']
+    await query.answer()
+
+    await message.edit_text('Опрацювання...')
+
+    resp_text = create_issue(feedback_model.user.first_name, feedback_model.msg_text)
+
+    await message.edit_text(resp_text)
+
+    context.user_data.clear()
+    return ConversationHandler.END
+
+
+async def write_issue(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    message = update.message
+    text = message.text
+
+    feedback_model = context.user_data['feedback_model']
+
+    await message.edit_text('Опрацювання...')
+
+    async with get_session() as session:
+        await mark_feedback_read(session, feedback_model.msg_id)
+
+    resp_text = create_issue(feedback_model.user.first_name, text)
+
+    await message.reply_text(resp_text)
+
+    context.user_data.clear()
+    return ConversationHandler.END
+
+
 feedback_handler = ConversationHandler(
     entry_points=[CommandHandler('feedback', start_feedback_command)],
     states={
@@ -178,13 +226,18 @@ feedback_handler = ConversationHandler(
     ],
     conversation_timeout=300.0
 )
+
 feedback_reply_handler = ConversationHandler(
-    entry_points=[MessageHandler(filters.Regex(re.compile(r'/reply_feedback_\d+')), feedback_reply)],
+    entry_points=[MessageHandler(filters.Regex(re.compile(r'/reply_feedback_\d+')), reply_feedback)],
     states={
         REPLY_START: [
             CallbackQueryHandler(cancel, pattern='^cancel$'),
-            MessageHandler(filters.Regex(re.compile(r'^/cancel$')), cancel),
             MessageHandler(filters.TEXT, feedback_reply_text)
+        ],
+        MAKE_ISSUE: [
+            CallbackQueryHandler(cancel, pattern='^cancel$'),
+            CallbackQueryHandler(make_instant_issue, pattern='^instant_issue$'),
+            MessageHandler(filters.TEXT, write_issue)
         ]
     },
     fallbacks=[
