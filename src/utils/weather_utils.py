@@ -93,8 +93,8 @@ class OpenWeatherMapAPI:
 
         if resp.ok:
             return resp.json()
-        else:
-            raise WeatherFetchError(f'Cannot fetch weather data about city  with coordinates: "{lat}", "{lon}"')
+
+        raise WeatherFetchError(f'Cannot fetch weather data about city  with coordinates: "{lat}", "{lon}"')
 
     @staticmethod
     def compose_msg(city_model: City, user_time: UserTime) -> str:
@@ -193,8 +193,8 @@ class SinoptikScraper:
 
         if resp.ok:
             return base_url
-        else:
-            raise SinoptikURLFetchError
+
+        raise SinoptikURLFetchError
 
     @staticmethod
     def check_url(url: str) -> str | None:
@@ -223,8 +223,8 @@ class ScreenshotAPI:
 
         if resp.ok:
             return resp
-        else:
-            raise ScreenshotAPIError(f'Cannot get screenshot for city with url: "{sinoptik_url}"')
+
+        raise ScreenshotAPIError(f'Cannot get screenshot for city with url: "{sinoptik_url}"')
 
 
 def get_emoji(weather_cond: str,

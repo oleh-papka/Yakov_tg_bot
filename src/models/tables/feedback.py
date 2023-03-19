@@ -11,6 +11,7 @@ class Feedback(Base):
     __tablename__ = 'feedback'
 
     id = Column(INTEGER, primary_key=True, autoincrement=True)
+    feedback_type = Column(TEXT, nullable=False)
     user_id = Column(INTEGER, ForeignKey('user.id'), nullable=False)
     msg_id = Column(INTEGER, nullable=False)
     msg_text = Column(TEXT, nullable=False)

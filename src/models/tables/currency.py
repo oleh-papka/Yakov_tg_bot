@@ -4,6 +4,7 @@ from sqlalchemy.orm import relationship
 
 from ..base import Base
 
+
 class Currency(Base):
     __tablename__ = 'currency'
 

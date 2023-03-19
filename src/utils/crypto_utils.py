@@ -17,8 +17,8 @@ def get_crypto_data(positions: int = 10) -> tuple | None:
 
     if usd_resp.ok and uah_resp.ok:
         return usd_resp.json(), uah_resp.json(), positions
-    else:
-        return None
+
+    return None
 
 
 def compose_crypto_msg(usd, uah, positions: int, coins: list) -> str:

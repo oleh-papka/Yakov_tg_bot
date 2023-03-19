@@ -2,7 +2,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.engine import Inspector
 from sqlalchemy.exc import SQLAlchemyError
 
-from config import Config
+from src.config import Config
 
 
 def check_db_connection() -> bool:
@@ -22,5 +22,5 @@ def check_db_tables() -> bool:
 
     if len(inspector.get_table_names()) == 9:  # with current setup there should be 9 tables
         return True
-    else:
-        return False
+
+    return False

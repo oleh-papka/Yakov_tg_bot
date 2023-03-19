@@ -1,4 +1,5 @@
 import logging
+import sys
 
 from telegram.ext import (Application,
                           MessageHandler,
@@ -32,7 +33,7 @@ def main() -> None:
     # Check if DB exists DB
     if not check_db():
         logger.critical("DB not found!")
-        exit()
+        sys.exit(1)
 
     # Register commands
     application.add_handler(start_command_handler)
