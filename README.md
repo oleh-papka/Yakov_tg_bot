@@ -1,5 +1,19 @@
 # Yakov_tg_bot
 
+[![DeepSource](https://deepsource.io/gh/Oleh-Papka/Yakov_tg_bot.svg/?label=active+issues&show_trend=true&token=OIiAWpkSJ_AG7k9ijIN_n4Os)](https://deepsource.io/gh/Oleh-Papka/Yakov_tg_bot/?ref=repository-badge)
+[![DeepSource](https://deepsource.io/gh/Oleh-Papka/Yakov_tg_bot.svg/?label=resolved+issues&show_trend=true&token=OIiAWpkSJ_AG7k9ijIN_n4Os)](https://deepsource.io/gh/Oleh-Papka/Yakov_tg_bot/?ref=repository-badge)
+
+
+[![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=Oleh-Papka_Yakov_tg_bot&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=Oleh-Papka_Yakov_tg_bot)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=Oleh-Papka_Yakov_tg_bot&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=Oleh-Papka_Yakov_tg_bot)
+[![Lines of Code](https://sonarcloud.io/api/project_badges/measure?project=Oleh-Papka_Yakov_tg_bot&metric=ncloc)](https://sonarcloud.io/summary/new_code?id=Oleh-Papka_Yakov_tg_bot)
+
+
+![GitHub issues](https://img.shields.io/github/issues/Oleh-Papka/Yakov_tg_bot?logo=GitHub)
+![GitHub](https://img.shields.io/github/license/Oleh-Papka/Yakov_tg_bot?logo=GitHub)
+![GitHub commit activity](https://img.shields.io/github/commit-activity/m/Oleh-Papka/Yakov_tg_bot?logo=GitHub)
+
+
 This is a simple Telegram helper bot designed to simplify daily routines.
 Initially, it was a personal project that grew into one of my largest pet projects,
 which I enjoy maintaining and supporting.
