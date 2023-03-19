@@ -135,15 +135,13 @@ async def reply_feedback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         context.user_data['markup_msg'] = await message.reply_text(response_text, reply_markup=make_issue_keyboard)
         return MAKE_ISSUE
 
-    else:
-        name = escape_md2(feedback_model.user.first_name)
+    name = escape_md2(feedback_model.user.first_name)
+    response_text = (f'Пишемо відповідь користувачу [{name}](tg://user?id={feedback_model.user.id}):\n\n'
+                     f'{feedback_model.msg_text}\n\n')
 
-        response_text = (f'Пишемо відповідь користувачу [{name}](tg://user?id={feedback_model.user.id}):\n\n'
-                         f'{feedback_model.msg_text}\n\n')
-
-        context.user_data['markup_msg'] = await message.reply_markdown_v2(escape_md2_no_links(response_text, ['`']),
-                                                                          reply_markup=cancel_keyboard)
-        return REPLY_START
+    context.user_data['markup_msg'] = await message.reply_markdown_v2(escape_md2_no_links(response_text, ['`']),
+                                                                      reply_markup=cancel_keyboard)
+    return REPLY_START
 
 
 async def back_to_making_issue(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
