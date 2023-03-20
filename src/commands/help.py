@@ -4,6 +4,7 @@ from telegram.ext import CommandHandler, ContextTypes
 
 from src.config import Config
 from src.utils import escape_md2_no_links
+from src.utils.message_utils import send_typing_action
 
 
 def _compose_help_message() -> str:
@@ -21,6 +22,7 @@ def _compose_help_message() -> str:
     return help_message_text
 
 
+@send_typing_action
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     message = update.message
 

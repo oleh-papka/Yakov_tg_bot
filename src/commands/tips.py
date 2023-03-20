@@ -6,8 +6,10 @@ from src.config import Config
 from src.crud.user import create_or_update_user
 from src.utils import escape_md2_no_links
 from src.utils.db_utils import get_session
+from src.utils.message_utils import send_typing_action
 
 
+@send_typing_action
 async def tip_developer(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     chat_id = update.message.chat_id
     user = update.effective_user
@@ -54,6 +56,7 @@ async def payment_precheckout(update: Update, context: ContextTypes.DEFAULT_TYPE
         await query.answer(ok=True)
 
 
+@send_typing_action
 async def successful_payment(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     message = update.message
     payment = message.successful_payment

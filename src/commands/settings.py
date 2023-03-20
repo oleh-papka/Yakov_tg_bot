@@ -12,6 +12,7 @@ from src.crud.user import create_or_update_user, get_user_by_id, update_user
 from src.handlers.canel_conversation import cancel, cancel_back_keyboard
 from src.models.errors import CityFetchError
 from src.utils.db_utils import get_session
+from src.utils.message_utils import send_typing_action
 from src.utils.time_utils import UserTime
 from src.utils.weather_utils import OpenWeatherMapAPI, SinoptikScraper
 
@@ -26,6 +27,7 @@ main_settings_keyboard = InlineKeyboardMarkup([
 ], )
 
 
+@send_typing_action
 async def settings(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     message = update.message
     user = message.from_user
@@ -76,6 +78,7 @@ async def city_settings_start(update: Update, context: ContextTypes.DEFAULT_TYPE
     return CITY_SETTINGS
 
 
+@send_typing_action
 async def city_settings_change(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     message = update.message
     user = update.effective_user
@@ -214,6 +217,7 @@ async def timezone_settings_start(update: Update, context: ContextTypes.DEFAULT_
     return TIMEZONE_SETTINGS
 
 
+@send_typing_action
 async def user_timezone_change(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     message = update.message
     user = update.effective_user

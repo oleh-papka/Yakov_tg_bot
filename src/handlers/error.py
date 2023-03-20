@@ -8,10 +8,12 @@ from telegram.constants import ParseMode
 from telegram.ext import ContextTypes
 
 from src.config import Config
+from src.utils.message_utils import send_typing_action
 
 logger = logging.getLogger(__name__)
 
 
+@send_typing_action
 async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
     err_msg_len = 1000 - 4  # Because "...\n" used
 

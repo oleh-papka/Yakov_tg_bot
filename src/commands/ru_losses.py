@@ -8,11 +8,12 @@ from telegram.ext import CommandHandler, ContextTypes
 from src.crud.user import get_user_by_id
 from src.handlers.days_passed import calc_date_diff, compose_passed_days_msg
 from src.utils.db_utils import get_session
-from src.utils.message_utils import escape_md2
+from src.utils.message_utils import escape_md2, send_typing_action
 from src.utils.time_utils import UserTime
 import re
 
 
+@send_typing_action
 async def rus_losses(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     message = update.message
     user = update.effective_user

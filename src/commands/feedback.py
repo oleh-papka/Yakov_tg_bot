@@ -17,7 +17,7 @@ from src.crud.user import create_or_update_user
 from src.handlers.canel_conversation import cancel, cancel_keyboard, cancel_back_keyboard
 from src.utils.db_utils import get_session
 from src.utils.github_utils import create_issue
-from src.utils.message_utils import escape_md2, escape_md2_no_links
+from src.utils.message_utils import escape_md2, escape_md2_no_links, send_typing_action
 
 FEEDBACK_START, GET_MESSAGE, REPLY_START, MAKE_ISSUE = 1, 2, 3, 4
 
@@ -34,6 +34,7 @@ make_issue_keyboard = InlineKeyboardMarkup([
 ])
 
 
+@send_typing_action
 async def start_feedback_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     message = update.message
     user = update.effective_user
@@ -71,8 +72,8 @@ async def get_feedback_type(update: Update, context: ContextTypes.DEFAULT_TYPE) 
     else:
         edited_text = ('Оу, замітив проблемки? Надішли свій bug report нижче:\n\n'
                        'P.S. Будь ласка, не забудь вказати, яка саме проблема виникла '
-                       'та що зробити щоб її відтворити, дякую. '
-                       'Розробник відповість, як тільки її виправить.')
+                       'та що зробити, щоб її відтворити, дякую. '
+                       'Розробник відповість як тільки її виправить.')
 
     context.user_data['markup_msg'] = await message.edit_text(text=edited_text,
                                                               reply_markup=cancel_back_keyboard)
@@ -80,6 +81,7 @@ async def get_feedback_type(update: Update, context: ContextTypes.DEFAULT_TYPE) 
     return GET_MESSAGE
 
 
+@send_typing_action
 async def feedback_get_user_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     message = update.message
     user = update.effective_user
@@ -110,6 +112,7 @@ async def feedback_get_user_text(update: Update, context: ContextTypes.DEFAULT_T
     return ConversationHandler.END
 
 
+@send_typing_action
 async def reply_feedback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     message = update.message
     context.user_data['command_msg'] = message
@@ -156,6 +159,7 @@ async def back_to_making_issue(update: Update, context: ContextTypes.DEFAULT_TYP
     return MAKE_ISSUE
 
 
+@send_typing_action
 async def feedback_reply_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     message = update.message
     text = message.text
@@ -212,6 +216,7 @@ async def reply_to(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     return REPLY_START
 
 
+@send_typing_action
 async def write_issue(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     message = update.message
     text = message.text
