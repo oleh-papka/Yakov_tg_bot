@@ -7,10 +7,11 @@ from src.config import Config
 from src.crud.currency import get_curr_by_user_id
 from src.crud.user import get_user_by_id
 from src.utils.db_utils import get_session
-from src.utils.message_utils import escape_md2
+from src.utils.message_utils import escape_md2, send_typing_action
 from src.utils.time_utils import UserTime
 
 
+@send_typing_action
 async def currency(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     message = update.message
     user = update.effective_user

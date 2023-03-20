@@ -1,14 +1,16 @@
 from telegram import Update
-from telegram.constants import ParseMode
+from telegram.constants import ParseMode, ChatAction
 from telegram.ext import ContextTypes, CommandHandler
 
 from src.crud.user import create_or_update_user, get_user_by_id
 from src.utils import escape_md2_no_links
 from src.utils.db_utils import get_session
+from src.utils.message_utils import send_upload_photo_action
 from src.utils.time_utils import UserTime
 from src.utils.weather_utils import OpenWeatherMapAPI, ScreenshotAPI
 
 
+@send_upload_photo_action
 async def weather(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     message = update.message
     user = update.effective_user
@@ -20,6 +22,7 @@ async def weather(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         users_city_model = user_model.city
 
     if not users_city_model:
+        await context.bot.send_chat_action(chat_id=update.effective_message.chat_id, action=ChatAction.TYPING)
         error_text = ('⚠ Схоже місто для прогнозу погоди не налаштовано!\n '
                       'Якщо не вказати міста я не знаю, що відповісти на команду.\n\n'
                       'Для налаштування міста обери відповідний пункт у налаштуваннях - /settings')
@@ -36,6 +39,8 @@ async def weather(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
     if sinoptik_url := users_city_model.sinoptik_url:
         if picture := ScreenshotAPI.get_photo(sinoptik_url, date):
+            await context.bot.send_chat_action(chat_id=update.effective_message.chat_id, action=ChatAction.UPLOAD_PHOTO)
+
             date_verbose = 'завтра' if user_time.next_day_flag else 'сьогодні'
             took_from_text = (f'Погода {users_city_model.local_name}, {date_verbose}\('
                               f'{user_time.date_repr(True)}\), взяв [тут]({sinoptik_url}).')
@@ -44,6 +49,7 @@ async def weather(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             await message.reply_photo(picture.content, caption=caption, parse_mode=ParseMode.MARKDOWN_V2)
             return
 
+    await context.bot.send_chat_action(chat_id=update.effective_message.chat_id, action=ChatAction.TYPING)
     weather_text = OpenWeatherMapAPI.compose_msg(users_city_model, user_time)
     await message.reply_markdown_v2(escape_md2_no_links(weather_text), disable_web_page_preview=True)
 

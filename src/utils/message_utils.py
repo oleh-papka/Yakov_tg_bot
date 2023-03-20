@@ -1,5 +1,6 @@
-from telegram import Update
-from telegram.ext import CallbackContext
+from functools import wraps
+
+from telegram.constants import ChatAction
 
 
 def escape_md2(msg: str, exclude: list | None = None) -> str:
@@ -31,12 +32,19 @@ def escape_md2_no_links(msg: str, exclude: list | None = None) -> str:
     return msg
 
 
-def send_chat_action(action_type: str):
-    def send_action(func):
-        def command_func(update: Update, context: CallbackContext, *args, **kwargs):
-            context.bot.send_chat_action(chat_id=update.effective_message.chat_id, action=action_type)
-            return func(update, context, *args, **kwargs)
+def send_action(action):
+    """Sends `action` while processing func command."""
+
+    def decorator(func):
+        @wraps(func)
+        async def command_func(update, context, *args, **kwargs):
+            await context.bot.send_chat_action(chat_id=update.effective_message.chat_id, action=action)
+            return await func(update, context, *args, **kwargs)
 
         return command_func
 
-    return send_action
+    return decorator
+
+
+send_typing_action = send_action(ChatAction.TYPING)
+send_upload_photo_action = send_action(ChatAction.UPLOAD_PHOTO)

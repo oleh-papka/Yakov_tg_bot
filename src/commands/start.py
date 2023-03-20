@@ -5,8 +5,10 @@ from telegram.ext import CommandHandler, ContextTypes
 from src.crud.user import create_or_update_user
 from src.utils import escape_md2_no_links
 from src.utils.db_utils import get_session
+from src.utils.message_utils import send_typing_action
 
 
+@send_typing_action
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user = update.effective_user
 

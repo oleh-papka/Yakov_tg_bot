@@ -10,12 +10,13 @@ from src.crud.feedback import get_unread_feedbacks
 from src.crud.user import create_or_update_user, get_user_by_id, get_all_users, update_user
 from src.handlers.canel_conversation import cancel, cancel_keyboard
 from src.utils.db_utils import get_session
-from src.utils.message_utils import escape_md2
+from src.utils.message_utils import escape_md2, send_typing_action
 from src.utils.time_utils import UserTime
 
 PROFILE_START, GET_MESSAGE, SEND_MESSAGE = 1, 2, 3
 
 
+@send_typing_action
 async def profile(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     message = update.message
     user = message.from_user
@@ -135,6 +136,7 @@ async def send_to(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     return GET_MESSAGE
 
 
+@send_typing_action
 async def message_check(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     message = update.message
     context.user_data['message_text'] = message.text
