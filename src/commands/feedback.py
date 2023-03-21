@@ -136,7 +136,7 @@ async def reply_feedback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
     context.user_data['feedback_model'] = feedback_model
 
-    response_text = f"Що зробимо з цим {feedback_model.feedback_type}?"
+    response_text = f"{feedback_model.msg_text}\n\nЩо зробимо з цим {feedback_model.feedback_type}?"
 
     context.user_data['markup_msg'] = await message.reply_text(response_text, reply_markup=feedback_reply_keyboard)
     return REPLY_START
@@ -201,7 +201,7 @@ async def back_to_reply_start(update: Update, context: ContextTypes.DEFAULT_TYPE
 
     feedback_model = context.user_data['feedback_model']
 
-    settings_start_text = f'Що зробимо з цим {feedback_model.feedback_type}?:'
+    settings_start_text = f'{feedback_model.msg_text}\n\nЩо зробимо з цим {feedback_model.feedback_type}?:'
 
     await query.edit_message_text(text=settings_start_text, reply_markup=feedback_reply_keyboard)
 
