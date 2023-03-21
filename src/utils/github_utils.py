@@ -18,7 +18,7 @@ def create_issue(user_name_from_report: str, body: str) -> dict:
     if code == 201:
         resp = response.json()
         issue_url = resp['html_url']
-        developer_text = f"✅ [Issue]({url}) створено успішно!"
+        developer_text = f"✅ [Issue]({issue_url}) створено успішно!"
 
         resp_dict |= {'url': issue_url}
     else:
