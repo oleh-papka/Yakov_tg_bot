@@ -99,9 +99,8 @@ async def get_feedbacks(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
     feedbacks_text = 'Ось усі не прочитані фідбеки:\n\n' if feedbacks_unread else 'Немає непрочитаних фідбеків!'
 
     for feedback in feedbacks_unread:
-        feedbacks_text += f'/reply_feedback_{feedback.msg_id}  ({feedback.feedback_type.replace("_", " ")})'
-
-        feedbacks_text += '\n'
+        feedbacks_text += (f'{Config.FEEDBACK_REPLY_COMMAND}{feedback.msg_id}{Config.SPACING}'
+                           f'({feedback.feedback_type.replace("_", " ")})\n')
 
     await query.edit_message_text(feedbacks_text)
 

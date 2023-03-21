@@ -58,6 +58,8 @@ class Config:
         ('help', 'Підказка')
     ]
 
+    FEEDBACK_REPLY_COMMAND = '/reply_to_'
+
     logging_lvl = logging.DEBUG if DEBUG_FLAG else logging.INFO
 
     class InterceptLogsHandler(logging.Handler):

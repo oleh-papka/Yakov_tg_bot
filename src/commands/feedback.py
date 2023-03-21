@@ -19,7 +19,6 @@ from src.utils.github_utils import create_issue
 from src.utils.message_utils import escape_md2, escape_md2_no_links, send_typing_action
 
 FEEDBACK_START, GET_MESSAGE, REPLY_START, REPLY_USER, MAKE_ISSUE = 1, 2, 3, 4, 5
-FEEDBACK_REPLY_COMMAND = '/reply_to_'
 
 feedback_start_keyboard = InlineKeyboardMarkup([
     [InlineKeyboardButton('Feedback 💬', callback_data='feedback'),
@@ -103,7 +102,7 @@ async def feedback_get_user_text(update: Update, context: ContextTypes.DEFAULT_T
 
     # Firstly send to developer feedback
     to_dev_text = (f"Повідомлення ({feedback_type}) від {user.name}:\n\n{message.text}\n\n"
-                   f"Відповісти на {feedback_type}? ({FEEDBACK_REPLY_COMMAND}{feedback_model.id})")
+                   f"Відповісти на {feedback_type}? ({Config.FEEDBACK_REPLY_COMMAND}{feedback_model.id})")
     await context.bot.send_message(Config.OWNER_ID, text=escape_md2(to_dev_text), parse_mode=ParseMode.MARKDOWN_V2)
 
     # Inform user that feedback sent
@@ -125,7 +124,7 @@ async def reply_feedback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
     context.user_data['command_msg'] = message
 
-    feedback_id = int(message.text.replace(FEEDBACK_REPLY_COMMAND, ''))
+    feedback_id = int(message.text.replace(Config.FEEDBACK_REPLY_COMMAND, ''))
 
     async with get_session() as session:
         feedback_model = await get_feedback_by_id(session, feedback_id)
@@ -151,7 +150,8 @@ async def make_instant_issue(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
     await message.edit_text('Опрацювання...')
 
-    issue_text = feedback_model.msg_text + f'\n\nReply to feedback command: {FEEDBACK_REPLY_COMMAND}{feedback_model.id}'
+    issue_text = feedback_model.msg_text
+    issue_text += f'\n\nReply to feedback command: {Config.FEEDBACK_REPLY_COMMAND}{feedback_model.id}'
 
     resp_text = create_issue(feedback_model.user.first_name, issue_text)
 
@@ -185,7 +185,7 @@ async def write_issue(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int
     async with get_session() as session:
         await mark_feedback_read(session, feedback_model.id)
 
-    issue_text = text + f'\n\nReply to feedback command: {FEEDBACK_REPLY_COMMAND}{feedback_model.id}'
+    issue_text = text + f'\n\nReply to feedback command: {Config.FEEDBACK_REPLY_COMMAND}{feedback_model.id}'
 
     resp_text = create_issue(feedback_model.user.first_name, issue_text)
 
@@ -234,9 +234,9 @@ async def feedback_reply_text(update: Update, context: ContextTypes.DEFAULT_TYPE
     feedback_model = context.user_data['feedback_model']
     markup_msg = context.user_data['markup_msg']
 
-    response_text = f"У відповідь на ваше повідомлення розробник пише:\n\n"
-    response_text += f"{text}\n\n"
-    response_text += f"P.S. Ще раз дякую за {feedback_model.feedback_type} 🙃"
+    response_text = (f"У відповідь на ваше повідомлення розробник пише:\n\n"
+                     f"{text}\n\n"
+                     f"P.S. Ще раз дякую за {feedback_model.feedback_type} 🙃")
 
     await markup_msg.edit_reply_markup()
 
@@ -274,7 +274,7 @@ feedback_handler = ConversationHandler(
 )
 
 feedback_reply_handler = ConversationHandler(
-    entry_points=[MessageHandler(filters.Regex(re.compile(f'{FEEDBACK_REPLY_COMMAND}\d+')), reply_feedback)],
+    entry_points=[MessageHandler(filters.Regex(re.compile(f'{Config.FEEDBACK_REPLY_COMMAND}\d+')), reply_feedback)],
     states={
         REPLY_START: [
             CallbackQueryHandler(cancel, pattern='^cancel$'),
