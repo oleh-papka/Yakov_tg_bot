@@ -4,7 +4,7 @@ import json
 from src.config import Config
 
 
-def create_issue(user_name_from_report: str, body: str) -> str:
+def create_issue(user_name_from_report: str, body: str) -> dict:
     title = f"Issue from {user_name_from_report}'s report"
     headers = {"Authorization": f"token {Config.GITHUB_TOKEN}"}
     data = {"title": title, "body": body, 'assignees': [Config.DEVELOPER_GH_PROFILE]}
@@ -12,10 +12,18 @@ def create_issue(user_name_from_report: str, body: str) -> str:
 
     response = requests.post(url, data=json.dumps(data), headers=headers)
 
-    if response.status_code == 201:
-        resp = response.json()
-        resp_text = f"✅ [Issue]({resp['html_url']}) створено успішно!"
-    else:
-        resp_text = f'❌ Не вдалось створити issue. Status code: {response.status_code}'
+    code = response.status_code
+    resp_dict = {'code': code}
 
-    return resp_text
+    if code == 201:
+        resp = response.json()
+        issue_url = resp['html_url']
+        developer_text = f"✅ [Issue]({url}) створено успішно!"
+
+        resp_dict |= {'url': issue_url}
+    else:
+        developer_text = f'❌ Не вдалось створити issue. Status code: {response.status_code}'
+
+    resp_dict |= {'developer_text': developer_text, }
+
+    return resp_dict

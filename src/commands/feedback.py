@@ -153,9 +153,23 @@ async def make_instant_issue(update: Update, context: ContextTypes.DEFAULT_TYPE)
     issue_text = feedback_model.msg_text
     issue_text += f'\n\nReply to feedback command: {Config.FEEDBACK_REPLY_COMMAND}{feedback_model.id}'
 
-    resp_text = create_issue(feedback_model.user.first_name, issue_text)
+    response = create_issue(feedback_model.user.first_name, issue_text)
 
-    await message.edit_text(escape_md2_no_links(resp_text), parse_mode=ParseMode.MARKDOWN_V2)
+    if response['code'] == 201:
+        url = response['url']
+        user_text = (f"Розробник створив [Issue]({url}) з вашого {feedback_model.feedback_type}."
+                     f"\n\nДякую за вклад у розвиток бота 😊")
+
+        # Inform user that issue was created from his feedback
+        await context.bot.send_message(chat_id=feedback_model.user_id,
+                                       text=escape_md2(user_text),
+                                       parse_mode=ParseMode.MARKDOWN_V2,
+                                       reply_to_message_id=feedback_model.msg_id)
+
+        async with get_session() as session:
+            await mark_feedback_read(session, feedback_model.id)
+
+    await message.edit_text(escape_md2_no_links(response['developer_text']), parse_mode=ParseMode.MARKDOWN_V2)
 
     context.user_data.clear()
     return ConversationHandler.END
@@ -187,9 +201,23 @@ async def write_issue(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int
 
     issue_text = text + f'\n\nReply to feedback command: {Config.FEEDBACK_REPLY_COMMAND}{feedback_model.id}'
 
-    resp_text = create_issue(feedback_model.user.first_name, issue_text)
+    response = create_issue(feedback_model.user.first_name, issue_text)
 
-    await message.reply_markdown_v2(escape_md2_no_links(resp_text))
+    if response['code'] == 201:
+        url = response['url']
+        user_text = (f"Розробник створив [Issue]({url}) з вашого {feedback_model.feedback_type}."
+                     f"\n\nДякую за вклад у розвиток бота 😊")
+
+        # Inform user that issue was created from his feedback
+        await context.bot.send_message(chat_id=feedback_model.user_id,
+                                       text=escape_md2(user_text),
+                                       parse_mode=ParseMode.MARKDOWN_V2,
+                                       reply_to_message_id=feedback_model.msg_id)
+
+        async with get_session() as session:
+            await mark_feedback_read(session, feedback_model.id)
+
+    await message.reply_markdown_v2(escape_md2_no_links(response['developer_text']))
 
     context.user_data.clear()
     return ConversationHandler.END
