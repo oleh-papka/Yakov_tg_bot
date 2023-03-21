@@ -13,7 +13,8 @@ def create_issue(user_name_from_report: str, body: str) -> str:
     response = requests.post(url, data=json.dumps(data), headers=headers)
 
     if response.status_code == 201:
-        resp_text = '✅ Issue створено успішно!'
+        resp = response.json()
+        resp_text = f"✅ [Issue]({resp['html_url']}) створено успішно!"
     else:
         resp_text = f'❌ Не вдалось створити issue. Status code: {response.status_code}'
 

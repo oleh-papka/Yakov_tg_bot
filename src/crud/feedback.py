@@ -4,10 +4,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.models import Feedback
 
 
-async def get_feedback_by_msg_id(session: AsyncSession, msg_id: int) -> Feedback:
+async def get_feedback_by_id(session: AsyncSession, feedback_id: int) -> Feedback:
     """Retrieve feedback from msg_id"""
 
-    query = select(Feedback).where(Feedback.msg_id == msg_id)
+    query = select(Feedback).where(Feedback.id == feedback_id)
     result = await session.execute(query)
     feedback = result.scalars().first()
 
@@ -24,10 +24,10 @@ async def get_feedback_by_user_id(session: AsyncSession, user_id: int):
     return feedbacks
 
 
-async def mark_feedback_read(session: AsyncSession, msg_id: int) -> None:
+async def mark_feedback_read(session: AsyncSession, feedback_id: int) -> None:
     """Update read_flag for feedback by message_id"""
 
-    query = select(Feedback).where(Feedback.msg_id == msg_id)
+    query = select(Feedback).where(Feedback.id == feedback_id)
     result = await session.execute(query)
     feedback = result.scalars().first()
 
@@ -40,7 +40,7 @@ async def create_feedback(session: AsyncSession,
                           user_id: int,
                           msg_id: int,
                           msg_text: str,
-                          read_flag: None | bool = None) -> None:
+                          read_flag: None | bool = None):
     """Adds feedback"""
 
     if read_flag is None:
@@ -53,6 +53,10 @@ async def create_feedback(session: AsyncSession,
                               read_flag=read_flag)
     session.add(feedback_model)
     await session.commit()
+
+    await session.refresh(feedback_model)
+
+    return feedback_model
 
 
 async def get_unread_feedbacks(session: AsyncSession):

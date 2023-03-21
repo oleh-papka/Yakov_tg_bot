@@ -99,10 +99,7 @@ async def get_feedbacks(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
     feedbacks_text = 'Ось усі не прочитані фідбеки:\n\n' if feedbacks_unread else 'Немає непрочитаних фідбеків!'
 
     for feedback in feedbacks_unread:
-        feedbacks_text += f'/reply_feedback_{feedback.msg_id}'
-
-        if feedback.feedback_type == 'bug_report':
-            feedbacks_text += '  (bug report)'
+        feedbacks_text += f'/reply_feedback_{feedback.msg_id}  ({feedback.feedback_type.replace("_", " ")})'
 
         feedbacks_text += '\n'
 
