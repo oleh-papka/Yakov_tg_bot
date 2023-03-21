@@ -156,13 +156,12 @@ async def make_instant_issue(update: Update, context: ContextTypes.DEFAULT_TYPE)
     response = create_issue(feedback_model.user.first_name, issue_text)
 
     if response['code'] == 201:
-        url = response['url']
-        user_text = (f"Розробник створив [Issue]({url}) з вашого {feedback_model.feedback_type}."
+        user_text = (f"Розробник створив [Issue]({response['url']}) з вашого {feedback_model.feedback_type}."
                      f"\n\nДякую за вклад у розвиток бота 😊")
 
         # Inform user that issue was created from his feedback
         await context.bot.send_message(chat_id=feedback_model.user_id,
-                                       text=escape_md2(user_text),
+                                       text=escape_md2_no_links(user_text),
                                        parse_mode=ParseMode.MARKDOWN_V2,
                                        reply_to_message_id=feedback_model.msg_id)
 
@@ -204,13 +203,12 @@ async def write_issue(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int
     response = create_issue(feedback_model.user.first_name, issue_text)
 
     if response['code'] == 201:
-        url = response['url']
-        user_text = (f"Розробник створив [Issue]({url}) з вашого {feedback_model.feedback_type}."
+        user_text = (f"Розробник створив [Issue]({response['url']}) з вашого {feedback_model.feedback_type}."
                      f"\n\nДякую за вклад у розвиток бота 😊")
 
         # Inform user that issue was created from his feedback
         await context.bot.send_message(chat_id=feedback_model.user_id,
-                                       text=escape_md2(user_text),
+                                       text=escape_md2_no_links(user_text),
                                        parse_mode=ParseMode.MARKDOWN_V2,
                                        reply_to_message_id=feedback_model.msg_id)
 
