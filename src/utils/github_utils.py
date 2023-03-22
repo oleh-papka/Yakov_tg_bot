@@ -5,9 +5,9 @@ from src.config import Config
 
 
 def create_issue(user_name_from_report: str, body: str) -> dict:
-    title = f"Issue from {user_name_from_report}'s report"
+    title = f"Draft: Issue from {user_name_from_report}'s report"
     headers = {"Authorization": f"token {Config.GITHUB_TOKEN}"}
-    data = {"title": title, "body": body, 'assignees': [Config.DEVELOPER_GH_PROFILE]}
+    data = {"title": title, "body": body, "assignees": [Config.DEVELOPER_GH_PROFILE], "labels": ["dev needed"]}
     url = f"https://api.github.com/repos/{Config.DEVELOPER_GH_PROFILE}/{Config.BOT_GH_REPO}/issues"
 
     response = requests.post(url, data=json.dumps(data), headers=headers)
