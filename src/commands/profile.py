@@ -1,5 +1,3 @@
-import re
-
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.constants import ParseMode
 from telegram.ext import ContextTypes, ConversationHandler, CommandHandler, CallbackQueryHandler, MessageHandler, \
@@ -68,14 +66,14 @@ async def user_data(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     curr = 'Немає інформації' if not curr else curr
 
     user_timezone_repr = UserTime.offset_repr(user_model.timezone_offset)
-    profile_text = f'🆗 Гаразд, ось усі твої дані: \n\n'
-    profile_text += f'Місто: *{city}*\n'
-    profile_text += f'Часовий пояс: *{user_timezone_repr}*\n'
-    profile_text += f'Мова: *{user_model.language_code}*\n'
-    profile_text += f'Криптовалюти: *{crypto_curr}*\n'
-    profile_text += f'Валюти: *{curr}*\n'
-    profile_text += f'Користувач із: _{since}_\n\n'
-    profile_text += 'Для зміни та налаштування - /settings'
+    profile_text = (f'🆗 Гаразд, ось усі твої дані: \n\n'
+                    f'Місто: *{city}*\n'
+                    f'Часовий пояс: *{user_timezone_repr}*\n'
+                    f'Мова: *{user_model.language_code}*\n'
+                    f'Криптовалюти: *{crypto_curr}*\n'
+                    f'Валюти: *{curr}*\n'
+                    f'Користувач із: _{since}_\n\n'
+                    f'Для зміни та налаштування - /settings')
 
     await query.edit_message_text(escape_md2(profile_text, ['*', '_']),
                                   parse_mode=ParseMode.MARKDOWN_V2,
@@ -190,7 +188,7 @@ async def send_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
     else:
         user_id = Config.TESTER_ID
         context.bot.send_message(user_id, msg_text)
-        sending_text = f'✅ Єєєєй! Уже надіслав твоє повідомлення тестувальнику!'
+        sending_text = '✅ Єєєєй! Уже надіслав твоє повідомлення тестувальнику!'
 
     await query.edit_message_text(sending_text)
 

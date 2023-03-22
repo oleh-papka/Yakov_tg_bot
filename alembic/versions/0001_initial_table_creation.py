@@ -1,7 +1,7 @@
 """initial_table_creation
 
 Revision ID: 0001
-Revises: 
+Revises:
 Create Date: 2023-03-05 18:52:51.348523
 
 """
