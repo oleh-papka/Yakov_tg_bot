@@ -106,8 +106,9 @@ async def feedback_get_user_text(update: Update, context: ContextTypes.DEFAULT_T
     await context.bot.send_message(Config.OWNER_ID, text=escape_md2(to_dev_text), parse_mode=ParseMode.MARKDOWN_V2)
 
     # Inform user that feedback sent
-    to_user_text = f'✅ Шик, уже надіслав [розробнику](tg://user?id={Config.OWNER_ID})!'
-    await message.reply_text(escape_md2_no_links(to_user_text), parse_mode=ParseMode.MARKDOWN_V2)
+    if Config.DEBUG_FLAG or user.id != Config.OWNER_ID:
+        to_user_text = f'✅ Шик, уже надіслав [розробнику](tg://user?id={Config.OWNER_ID})!'
+        await message.reply_text(escape_md2_no_links(to_user_text), parse_mode=ParseMode.MARKDOWN_V2)
 
     context.user_data.clear()
     return ConversationHandler.END
@@ -145,6 +146,7 @@ async def reply_feedback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 async def make_instant_issue(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     query = update.callback_query
     message = query.message
+    user = update.effective_user
     feedback_model = context.user_data['feedback_model']
     await query.answer()
 
@@ -160,10 +162,11 @@ async def make_instant_issue(update: Update, context: ContextTypes.DEFAULT_TYPE)
                      f"\n\nДякую за вклад у розвиток бота 😊")
 
         # Inform user that issue was created from his feedback
-        await context.bot.send_message(chat_id=feedback_model.user_id,
-                                       text=escape_md2_no_links(user_text),
-                                       parse_mode=ParseMode.MARKDOWN_V2,
-                                       reply_to_message_id=feedback_model.msg_id)
+        if Config.DEBUG_FLAG or user.id != Config.OWNER_ID:
+            await context.bot.send_message(chat_id=feedback_model.user_id,
+                                           text=escape_md2_no_links(user_text),
+                                           parse_mode=ParseMode.MARKDOWN_V2,
+                                           reply_to_message_id=feedback_model.msg_id)
 
         async with get_session() as session:
             await mark_feedback_read(session, feedback_model.id)
@@ -300,7 +303,7 @@ feedback_handler = ConversationHandler(
 )
 
 feedback_reply_handler = ConversationHandler(
-    entry_points=[MessageHandler(filters.Regex(re.compile(f'{Config.FEEDBACK_REPLY_COMMAND}\d+')), reply_feedback)],
+    entry_points=[MessageHandler(filters.Regex(re.compile(f'{Config.FEEDBACK_REPLY_COMMAND}\\d+')), reply_feedback)],
     states={
         REPLY_START: [
             CallbackQueryHandler(cancel, pattern='^cancel$'),
