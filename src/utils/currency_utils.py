@@ -80,9 +80,9 @@ def compose_output(ccy_data: dict, ccy_models: Result) -> str:
 
         for market_type, price in ccy.items():
             if len(price) == 2:
-                text += f"{Config.SPACING}{market_type}:  _{price[0]:0.2f}₴_ | _{price[1]:0.2f}₴_\n"
+                text += f"{Config.SPACING}{market_type}:  _{price[0]:,.2f}₴_ | _{price[1]:,.2f}₴_\n"
             else:
-                nb_text = f"{Config.SPACING}{market_type}:  _{price[0]:0.2f}₴_\n"
+                nb_text = f"{Config.SPACING}{market_type}:  _{price[0]:,.2f}₴_\n"
 
         text += f"{nb_text}\n"
 

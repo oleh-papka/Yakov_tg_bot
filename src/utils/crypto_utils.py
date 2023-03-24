@@ -55,6 +55,6 @@ def compose_crypto_msg(usd, uah, positions: int, coins: list) -> str:
 
         msg += f'{main_emoji} *{coin_name}* ({coin_abbr}):\n'
         msg += f'{Config.SPACING}{secondary_emoji}*{price_usd:,}$* (_{price_uah:,}₴_):\n'
-        msg += f'{Config.SPACING}( {change_1h:0.2f}% *|* {change_24h:0.2f}% *|* {change_7d:0.2f}% )\n\n'
+        msg += f'{Config.SPACING}( {change_1h:,.2f}% *|* {change_24h:,.2f}% *|* {change_7d:,.2f}% )\n\n'
 
     return msg
