@@ -24,6 +24,7 @@ async def currency_converter(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
     if 'uah' in user_text or 'грн' in user_text:  # converting uah to usd
         text = f"🧮 *{amount} UAH в USD:*\n"
+        nb_text = ""
 
         for market_type, price in usd_data.items():
             if len(price) == 2:
@@ -31,9 +32,11 @@ async def currency_converter(update: Update, context: ContextTypes.DEFAULT_TYPE)
             else:
                 nb_text = f"{Config.SPACING_SMALL}{market_type}: (_{price[0]:,.2f}₴_) -> *{amount / price[0]:,.2f}$*\n"
 
-        text += f"{nb_text}"
+        text += f"\n{nb_text}"
+
     else:  # converting usd to uah
         text = f"🧮 *{amount} USD в UAH:*\n"
+        nb_text = ""
 
         for market_type, price in usd_data.items():
             if len(price) == 2:
