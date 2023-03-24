@@ -43,12 +43,6 @@ async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> N
     await context.bot.send_message(chat_id=Config.OWNER_ID, text=msg3, parse_mode=ParseMode.HTML)
 
     # Inform user
-    msg = 'Перепрошую, щось пішло не так. Я уже повідомив розробника.\n\nПідказка - /help'
+    error_text = 'Перепрошую, щось пішло не так. Я уже повідомив розробника.\n\nПідказка - /help'
 
-    if update.callback_query:
-        query = update.callback_query
-        message = query.message
-    else:
-        message = update.message
-
-    await message.reply_text(msg, quote=True)
+    await update.effective_message.reply_text(text=error_text, reply_to_message_id=update.effective_message)

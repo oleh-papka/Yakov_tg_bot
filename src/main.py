@@ -21,7 +21,8 @@ from src.commands import (help_command_handler,
 from src.config import Config
 from src.handlers import (error_handler,
                           unknown_messages,
-                          days_passed_handler)
+                          days_passed_handler,
+                          currency_convertor_handler)
 from src.utils.db_utils import check_db
 
 logger = logging.getLogger(__name__)
@@ -49,6 +50,7 @@ def main() -> None:
 
     # Register other handlers
     application.add_handler(days_passed_handler)
+    application.add_handler(currency_convertor_handler)
 
     # Test tip handlers
     application.add_handler(tip_developer_handler)
