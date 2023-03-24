@@ -31,7 +31,7 @@ async def currency(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     try:
         ccy_data = get_min_fin_price()
         ccy_data["USD"] |= get_privat_usd_price()
-    except MinFinParseError or MinFinFetchError or Privat24APIError:
+    except (MinFinParseError, MinFinFetchError, Privat24APIError):
         await message.reply_text("Ситуація, не можу отримати дані...")
         return
 
