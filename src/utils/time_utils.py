@@ -79,13 +79,15 @@ class UserTime(datetime):
         date_time = dt.strftime('%H:%M %d-%m-%Y')
         tomorrow_dt = dt + timedelta(days=1)
         tomorrow = tomorrow_dt.strftime('%Y-%m-%d')
+        yesterday = UserTime(dt)
 
         return {
             'time': time,
             'date': date,
             'date_time': date_time,
             'dt': dt,
-            'tomorrow': tomorrow
+            'tomorrow': tomorrow,
+            'yesterday': yesterday
         }
 
     @staticmethod
