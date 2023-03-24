@@ -12,7 +12,7 @@ from src.utils.time_utils import UserTime
 def get_privat_usd_price() -> dict:
     base_url = "https://api.privatbank.ua/p24api/pubinfo?exchange&coursid={}"
     market_type_ids = {'ПриватБанк': 5, 'Privat24': 11}
-    ccy_data = dict()
+    ccy_data = {}
 
     for market_type, type_id in market_type_ids.items():
         response = requests.get(base_url.format(type_id))
@@ -30,7 +30,7 @@ def get_privat_usd_price() -> dict:
 
 def get_min_fin_price() -> dict:
     # Get html table from MinFin
-    all_currencies_url = f"https://minfin.com.ua/ua/currency/"
+    all_currencies_url = "https://minfin.com.ua/ua/currency/"
 
     response = requests.get(all_currencies_url)
     if not response.ok:
@@ -47,7 +47,7 @@ def get_min_fin_price() -> dict:
         raise MinFinParseError
 
     # Parse the html table of CCYs
-    ccy_data = dict()
+    ccy_data = {}
 
     for row in rows[:-1]:
         tds = row.find_all('td')
@@ -69,7 +69,7 @@ def get_min_fin_price() -> dict:
 
 
 def compose_output(ccy_data: dict, ccy_models: Result) -> str:
-    text = str()
+    text = ""
 
     for model in ccy_models:
         name = model.name.upper()
