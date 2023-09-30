@@ -4,7 +4,7 @@ from telegram.ext import CommandHandler, ContextTypes
 from src.crud.currency import get_curr_by_user_id
 from src.crud.user import get_user_by_id
 from src.models.errors import MinFinParseError, MinFinFetchError, Privat24APIError
-from src.utils.currency_utils import get_min_fin_price, get_privat_usd_price, compose_output
+from src.utils.currency_utils import get_min_fin_price, Privat24API, compose_output
 from src.utils.db_utils import get_session
 from src.utils.message_utils import escape_md2, send_typing_action
 from src.utils.time_utils import UserTime
@@ -30,7 +30,7 @@ async def currency(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
     try:
         ccy_data = get_min_fin_price()
-        ccy_data["USD"] |= get_privat_usd_price()
+        ccy_data["USD"] |= Privat24API.get_usd_price()
     except (MinFinParseError, MinFinFetchError, Privat24APIError):
         await message.reply_text("Ситуація, не можу отримати дані...")
         return

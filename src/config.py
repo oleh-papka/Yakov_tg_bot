@@ -25,7 +25,7 @@ class Config:
     CMC_API_TOKEN = load_env_variable('CMC_API_TOKEN')  # CoinMarketCup API token
     SCREENSHOT_API_TOKEN = load_env_variable('SCREENSHOT_API_TOKEN')  # Screenshot api token
     OWM_API_TOKEN = load_env_variable('OWM_API_TOKEN')  # OpenWeatherMap API token
-    GITHUB_TOKEN = load_env_variable('GITHUB_TOKEN')    # GitHub API token
+    # GITHUB_TOKEN = load_env_variable('GITHUB_TOKEN')    # GitHub API token | will be removed in the next versions
 
     DB_URL = load_env_variable('DB_URL')  # URL to your db
 
@@ -45,7 +45,7 @@ class Config:
     SPACING = '⠀⠀  '  # Main whitespace characters used in formatting
     SPACING_SMALL = '⠀⠀'
 
-    BOT_VERSION = 'v0.1.2-5'
+    BOT_VERSION = 'v0.1.2-6'
 
     BOT_COMMANDS = [
         ('weather', 'Погода'),
