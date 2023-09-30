@@ -1,3 +1,4 @@
+import json
 import re
 
 import requests
@@ -6,26 +7,37 @@ from sqlalchemy import Result
 
 from src.config import Config
 from src.models.errors import Privat24APIError, MinFinFetchError, MinFinParseError
-from src.utils.time_utils import UserTime
 
 
-def get_privat_usd_price() -> dict:
+class Privat24API:
     base_url = "https://api.privatbank.ua/p24api/pubinfo?exchange&coursid={}"
     market_type_ids = {'ПриватБанк': 5, 'Privat24': 11}
-    ccy_data = {}
 
-    for market_type, type_id in market_type_ids.items():
-        response = requests.get(base_url.format(type_id))
+    @staticmethod
+    def get_usd_price() -> dict:
+        ccy_data = {}
 
-        if response.ok:
-            resp = response.json()
-            usd = [ccy for ccy in resp if ccy['ccy'] == "USD"][0]
-            ccy_data |= {market_type: [float(usd["buy"]), float(usd["sale"])]}
+        for market_type, type_id in Privat24API.market_type_ids.items():
 
-    if not ccy_data:
-        raise Privat24APIError
+            try:
+                response = requests.get(Privat24API.base_url.format(type_id))
+                response.raise_for_status()
+            except requests.exceptions.RequestException as e:
+                raise Privat24APIError(f"Privat24API request failed: {e}")
 
-    return ccy_data
+            if response.ok:
+                try:
+                    resp = response.json()
+                except json.JSONDecodeError as e:
+                    raise Privat24APIError(f"JSON decoding failed: {e}")
+
+                usd = [ccy for ccy in resp if ccy['ccy'] == "USD"][0]
+                ccy_data |= {market_type: [float(usd["buy"]), float(usd["sale"])]}
+
+        if not ccy_data:
+            raise Privat24APIError
+
+        return ccy_data
 
 
 def get_min_fin_price() -> dict:
@@ -37,8 +49,9 @@ def get_min_fin_price() -> dict:
         raise MinFinFetchError
 
     soup = BeautifulSoup(response.text, 'lxml')
-    table = soup.select("body > main > div.mfz-container > div > div.mfz-col-content > "
-                        "div > section:nth-child(3) > div.mfm-grey-bg > table")
+    table = soup.select(
+        "#root > div > section > div > div > div > main > section.bvp3d3-1.fwOefR > div.bvp3d3-8.bTJUGM > "
+        "div:nth-child(1) > div.sc-1x32wa2-0.dWgyGF.bvp3d3-10.kNRLfR > table")
     if not table:
         raise MinFinParseError
 
@@ -46,24 +59,40 @@ def get_min_fin_price() -> dict:
     if not rows:
         raise MinFinParseError
 
-    # Parse the html table of CCYs
     ccy_data = {}
 
     for row in rows[:-1]:
         tds = row.find_all('td')
         ccy = tds[0].a.text.strip().upper()
-        bank_price = re.sub(r"\n\n[+-]?([0-9]*[.])?[0-9]+ /\n[+-]?([0-9]*[.])?[0-9]+\n\n", ' ',
-                            tds[1].text.strip().replace('  ', ' ').replace(',', '.'))
-        bank_price = [float(price) for price in bank_price.split()]
-        black_market_price = tds[3].text.strip().replace('\n', '').replace('/', '').replace('  ', ' ').replace(',', '.')
-        black_market_price = [float(price) for price in black_market_price.split()]
-        nb_price = [float(tds[2].text.strip().split()[0])]
+
+        bank_buy = float(tds[1].contents[0].next.strip().replace(',', '.'))
+        bank_sell = float(tds[2].contents[0].next.strip().replace(',', '.'))
+
+        nb_price = [float(tds[3].contents[0].next.strip().replace(',', '.'))]
 
         ccy_data[ccy] = {
-            "Сер. в банках": bank_price,
-            tds[3]['data-title'].strip(): black_market_price,
-            tds[2]['data-title'].strip(): nb_price
+            "НБУ": nb_price,
+            "Сер. банк": [bank_buy, bank_sell],
         }
+
+    table2 = soup.select(
+        "#root > div > section > div > div > div > main > section.bvp3d3-1.fwOefR > div.bvp3d3-8.bTJUGM > "
+        "div.bvp3d3-9.bvp3d3-12.FqORR.UIaOD > div.sc-1x32wa2-0.dWgyGF.bvp3d3-10.bvp3d3-11.kNRLfR.cLIHts > table")
+    if not table2:
+        raise MinFinParseError
+
+    rows2 = table[0].find_all('tr')[1:]
+    if not rows2:
+        raise MinFinParseError
+
+    for row in rows2[:-1]:
+        tds = row.find_all('td')
+        ccy = tds[0].a.text.strip().upper()
+
+        cash_buy = float(tds[1].contents[0].next.strip().replace(',', '.'))
+        cash_sell = float(tds[2].contents[0].next.strip().replace(',', '.'))
+
+        ccy_data[ccy]["Готівка"] = [cash_buy, cash_sell]
 
     return ccy_data
 
