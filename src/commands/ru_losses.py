@@ -31,14 +31,15 @@ async def rus_losses(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
         return
 
     soup = BeautifulSoup(response.text, 'lxml')
-    data = soup.select('#idx-content > ul:nth-child(5) > li:nth-child(1)')[0]
+    data = soup.select('#idx-content > ul:nth-child(4) > li:nth-child(1)')[0]
 
     date = data.find('span', class_='black').text
     diff = calc_date_diff(datetime(2022, 2, 24), user_time['dt'])
     rel_time = compose_passed_days_msg(diff, 'початку війни')
     losses_text = f'Втрати ₚосії станом на *{date}*:\n\n'
 
-    loses = data.select('div')[0].find_all('li')
+    loses = soup.select('#idx-content > ul:nth-child(4) > li:nth-child(1) > div.casualties >'
+                        ' div:nth-child(1) > ul')[0].find_all('li')
     if not loses:
         await message.reply_text(error_text)
         return
