@@ -1,7 +1,10 @@
+aiolimiter==1.1.0
 alembic==1.9.4
 anyio==4.0.0
+APScheduler==3.10.4
 asyncpg==0.27.0
 beautifulsoup4==4.11.2
+cachetools==5.3.1
 certifi==2023.7.22
 charset-normalizer==3.2.0
 greenlet==2.0.2
@@ -24,4 +27,5 @@ soupsieve==2.5
 SQLAlchemy==2.0.4
 tornado==6.3.3
 typing_extensions==4.8.0
+tzlocal==5.0.1
 urllib3==1.26.16

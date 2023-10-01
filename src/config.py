@@ -45,18 +45,18 @@ class Config:
     SPACING = '⠀⠀  '  # Main whitespace characters used in formatting
     SPACING_SMALL = '⠀⠀'
 
-    BOT_VERSION = 'v0.1.2-6'
+    BOT_VERSION = 'v0.2.0-dev'
 
     BOT_COMMANDS = [
-        ('weather', 'Погода'),
-        ('crypto', 'Трішки про крипту'),
-        ('currency', 'Дані по валюті'),
-        ('ruloss', 'Втрати кацапні'),
-        ('tip_developer', 'Тестові донейти'),
-        ('profile', 'Профіль користувача'),
-        ('feedback', 'Надіслати відгук'),
-        ('settings', 'Налаштування'),
-        ('help', 'Підказка')
+        ('weather', 'Погода', False),
+        ('crypto', 'Трішки про крипту', False),
+        ('currency', 'Дані по валюті', False),
+        ('ruloss', 'Втрати кацапні', False),
+        ('tip_developer', 'Тестові донейти', False),
+        ('message_users', 'Повідомити користувачів', True),
+        ('feedback', 'Надіслати відгук', False),
+        ('settings', 'Налаштування', False),
+        ('help', 'Підказка', False)
     ]
 
     FEEDBACK_REPLY_COMMAND = '/reply_to_'
