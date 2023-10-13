@@ -1,6 +1,6 @@
 import re
 
-from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.constants import ParseMode
 from telegram.ext import (filters,
                           MessageHandler,
@@ -11,32 +11,19 @@ from telegram.ext import (filters,
 
 from src.config import Config
 from src.crud.feedback import (create_feedback,
-                               mark_feedback_read, get_feedback_by_id)
+                               create_feedback_reply,
+                               mark_feedback_read,
+                               get_feedback_by_id)
 from src.crud.user import create_or_update_user
-from src.handlers.canel_conversation import cancel, cancel_back_keyboard
+from src.handlers.canel_conversation import cancel, cancel_keyboard
 from src.utils.db_utils import get_session
-from src.utils.github_utils import create_issue
 from src.utils.message_utils import escape_md2, escape_md2_no_links, send_typing_action
 
-FEEDBACK_START, GET_MESSAGE, REPLY_START, REPLY_USER, MAKE_ISSUE = 1, 2, 3, 4, 5
-
-feedback_start_keyboard = InlineKeyboardMarkup([
-    [InlineKeyboardButton('Feedback 💬', callback_data='feedback'),
-     InlineKeyboardButton('Bug report 🐛', callback_data='bug_report'),
-     InlineKeyboardButton('Пропозиція 👀', callback_data='suggestion')],
-    [InlineKeyboardButton('🚫 Відмінити', callback_data='cancel')]
-])
-
-feedback_reply_keyboard = InlineKeyboardMarkup([
-    [InlineKeyboardButton('Instant Issue 📑', callback_data='instant_issue'),
-     InlineKeyboardButton('Написати Issue ✒️', callback_data='write_issue')],
-    [InlineKeyboardButton('Відповісти користувачу 💬', callback_data='reply_to')],
-    [InlineKeyboardButton('🚫 Відмінити', callback_data='cancel')]
-])
+GET_MESSAGE, REPLY_START, SUBMIT_SENDING = 1, 2, 3
 
 
 @send_typing_action
-async def start_feedback_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+async def write_feedback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     message = update.message
     user = update.effective_user
     context.user_data['command_msg'] = message
@@ -44,42 +31,8 @@ async def start_feedback_command(update: Update, context: ContextTypes.DEFAULT_T
     async with get_session() as session:
         await create_or_update_user(session, user)
 
-    context.user_data['markup_msg'] = await message.reply_text('Ок, обери, що варто зробити з наведеного нижче:',
-                                                               reply_markup=feedback_start_keyboard)
-
-    return FEEDBACK_START
-
-
-async def back_to_feedback_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    query = update.callback_query
-    await query.answer()
-
-    settings_start_text = 'Шукаєш щось інше?\nОбери з нижче наведених опцій:'
-
-    await query.edit_message_text(text=settings_start_text, reply_markup=feedback_start_keyboard)
-
-    return FEEDBACK_START
-
-
-async def get_feedback_type(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    query = update.callback_query
-    message = query.message
-    await query.answer()
-
-    context.user_data['feedback_type'] = query.data
-
-    if query.data == 'feedback':
-        edited_text = 'Ясненько, тоді надішли мені повідомлення, яким ти хочеш поділитись із розробником нижче:'
-    elif query.data == 'bug_report':
-        edited_text = ('Оу, замітив проблемки? Надішли свій bug report нижче:\n\n'
-                       'P.S. Будь ласка, не забудь вказати, яка саме проблема виникла '
-                       'та що зробити, щоб її відтворити, дякую. '
-                       'Розробник відповість як тільки її виправить.')
-    else:  # suggestion
-        edited_text = 'Цікаво, маєш пропозіції, розробник буде радий почути. Напиши нижче, що хочеш запропонувати:'
-
-    context.user_data['markup_msg'] = await message.edit_text(text=edited_text,
-                                                              reply_markup=cancel_back_keyboard)
+    context.user_data['markup_msg'] = await message.reply_text('Ок, напиши свій фідбек нижче:',
+                                                               reply_markup=cancel_keyboard)
 
     return GET_MESSAGE
 
@@ -89,21 +42,21 @@ async def feedback_get_user_text(update: Update, context: ContextTypes.DEFAULT_T
     message = update.message
     user = update.effective_user
     markup_msg = context.user_data['markup_msg']
-    feedback_type = context.user_data['feedback_type']
 
     await markup_msg.edit_reply_markup()
 
     async with get_session() as session:
         feedback_model = await create_feedback(session=session,
-                                               feedback_type=feedback_type,
                                                user_id=user.id,
                                                msg_id=message.message_id,
                                                msg_text=message.text)
 
     # Firstly send to developer feedback
-    to_dev_text = (f"Повідомлення ({feedback_type}) від {user.name}:\n\n{message.text}\n\n"
-                   f"Відповісти на {feedback_type}? ({Config.FEEDBACK_REPLY_COMMAND}{feedback_model.id})")
-    await context.bot.send_message(Config.OWNER_ID, text=escape_md2(to_dev_text), parse_mode=ParseMode.MARKDOWN_V2)
+    to_dev_text = (f"Фідбек від {user.name}:\n\n{message.text}\n\n"
+                   f"Відповісти на фідбек? ({Config.FEEDBACK_REPLY_COMMAND}{feedback_model.id})")
+
+    await context.bot.send_message(Config.OWNER_ID, text=escape_md2(to_dev_text),
+                                   parse_mode=ParseMode.MARKDOWN_V2)
 
     # Inform user that feedback sent
     if Config.DEBUG_FLAG or user.id != Config.OWNER_ID:
@@ -137,137 +90,54 @@ async def reply_feedback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
     context.user_data['feedback_model'] = feedback_model
 
-    response_text = f"{feedback_model.msg_text}\n\nЩо зробимо з цим {feedback_model.feedback_type}?"
-
-    context.user_data['markup_msg'] = await message.reply_text(response_text, reply_markup=feedback_reply_keyboard)
-    return REPLY_START
-
-
-async def make_instant_issue(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    query = update.callback_query
-    message = query.message
-    user = update.effective_user
-    feedback_model = context.user_data['feedback_model']
-    await query.answer()
-
-    await message.edit_text('Опрацювання...')
-
-    issue_text = feedback_model.msg_text
-    issue_text += f'\n\nReply to feedback command: {Config.FEEDBACK_REPLY_COMMAND}{feedback_model.id}'
-
-    response = create_issue(feedback_model.user.first_name, issue_text)
-
-    if response['code'] == 201:
-        user_text = (f"Розробник створив [Issue]({response['url']}) з вашого {feedback_model.feedback_type}."
-                     f"\n\nДякую за вклад у розвиток бота 😊")
-
-        # Inform user that issue was created from his feedback
-        if Config.DEBUG_FLAG or user.id != Config.OWNER_ID:
-            await context.bot.send_message(chat_id=feedback_model.user_id,
-                                           text=escape_md2_no_links(user_text),
-                                           parse_mode=ParseMode.MARKDOWN_V2,
-                                           reply_to_message_id=feedback_model.msg_id)
-
-        async with get_session() as session:
-            await mark_feedback_read(session, feedback_model.id)
-
-    await message.edit_text(escape_md2_no_links(response['developer_text']), parse_mode=ParseMode.MARKDOWN_V2)
-
-    context.user_data.clear()
-    return ConversationHandler.END
-
-
-async def make_issue(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    query = update.callback_query
-    message = query.message
-    await query.answer()
-
-    await message.edit_text('Ок тоді напиши, що б ти хотів бачити в даній issue нижче:',
-                            reply_markup=cancel_back_keyboard)
-
-    return MAKE_ISSUE
-
-
-@send_typing_action
-async def write_issue(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    message = update.message
-    text = message.text
-
-    feedback_model = context.user_data['feedback_model']
-    markup_msg = context.user_data['markup_msg']
-
-    await markup_msg.edit_reply_markup()
-
-    async with get_session() as session:
-        await mark_feedback_read(session, feedback_model.id)
-
-    issue_text = text + f'\n\nReply to feedback command: {Config.FEEDBACK_REPLY_COMMAND}{feedback_model.id}'
-
-    response = create_issue(feedback_model.user.first_name, issue_text)
-
-    if response['code'] == 201:
-        user_text = (f"Розробник створив [Issue]({response['url']}) з вашого {feedback_model.feedback_type}."
-                     f"\n\nДякую за вклад у розвиток бота 😊")
-
-        # Inform user that issue was created from his feedback
-        await context.bot.send_message(chat_id=feedback_model.user_id,
-                                       text=escape_md2_no_links(user_text),
-                                       parse_mode=ParseMode.MARKDOWN_V2,
-                                       reply_to_message_id=feedback_model.msg_id)
-
-        async with get_session() as session:
-            await mark_feedback_read(session, feedback_model.id)
-
-    await message.reply_markdown_v2(escape_md2_no_links(response['developer_text']))
-
-    context.user_data.clear()
-    return ConversationHandler.END
-
-
-async def back_to_reply_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    query = update.callback_query
-    await query.answer()
-
-    feedback_model = context.user_data['feedback_model']
-
-    settings_start_text = f'{feedback_model.msg_text}\n\nЩо зробимо з цим {feedback_model.feedback_type}?:'
-
-    await query.edit_message_text(text=settings_start_text, reply_markup=feedback_reply_keyboard)
-
-    return REPLY_START
-
-
-async def reply_to(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    query = update.callback_query
-    message = query.message
-    await query.answer()
-
-    feedback_model = context.user_data['feedback_model']
-
     name = escape_md2(feedback_model.user.first_name)
     response_text = (f'Пишемо відповідь користувачу [{name}](tg://user?id={feedback_model.user.id}) '
-                     f'на {feedback_model.feedback_type}:\n\n{feedback_model.msg_text}')
+                     f'на фідбек:\n\n{feedback_model.msg_text}')
 
-    await message.edit_text(escape_md2_no_links(response_text, ['`']),
-                            parse_mode=ParseMode.MARKDOWN_V2,
-                            reply_markup=cancel_back_keyboard)
-
-    return REPLY_USER
+    context.user_data['markup_msg'] = await message.reply_text(escape_md2_no_links(response_text, ['`']),
+                                                               parse_mode=ParseMode.MARKDOWN_V2,
+                                                               reply_markup=cancel_keyboard)
+    return REPLY_START
 
 
 @send_typing_action
-async def feedback_reply_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+async def feedback_reply_check(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     message = update.message
-    text = message.text
 
-    feedback_model = context.user_data['feedback_model']
     markup_msg = context.user_data['markup_msg']
-
-    response_text = (f"У відповідь на ваше повідомлення розробник пише:\n\n"
-                     f"{text}\n\n"
-                     f"P.S. Ще раз дякую за {feedback_model.feedback_type} 🙃")
+    context.user_data['feedback_reply_text'] = message.text
 
     await markup_msg.edit_reply_markup()
+
+    confirmation_keyboard = [
+        [
+            InlineKeyboardButton('Підтвердити ✅', callback_data='confirm'),
+            InlineKeyboardButton('Редагувати 📝', callback_data='edit')
+        ],
+        [InlineKeyboardButton('🚫 Відмінити', callback_data='cancel')]
+    ]
+
+    reply_keyboard = InlineKeyboardMarkup(confirmation_keyboard)
+
+    await message.reply_text('Впевнений, надіслати дане повідомлення?',
+                             reply_markup=reply_keyboard,
+                             reply_to_message_id=message.message_id)
+
+    return SUBMIT_SENDING
+
+
+async def send_reply_feedback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    query = update.callback_query
+    await query.answer()
+
+    feedback_model = context.user_data['feedback_model']
+    feedback_reply_text = context.user_data['feedback_reply_text']
+
+    response_text = (f"У відповідь на ваше повідомлення розробник пише:\n\n"
+                     f"{feedback_reply_text}\n\n"
+                     f"P.S. Ще раз дякую за фідбек 🙃")
+
+    await query.edit_message_text('🆗 Уже надсилаю...', reply_markup=None)
 
     await context.bot.send_message(chat_id=feedback_model.user_id,
                                    text=escape_md2(response_text),
@@ -275,24 +145,31 @@ async def feedback_reply_text(update: Update, context: ContextTypes.DEFAULT_TYPE
                                    reply_to_message_id=feedback_model.msg_id)
 
     async with get_session() as session:
+        await create_feedback_reply(session, feedback_model.id, feedback_model.msg_id, feedback_reply_text)
         await mark_feedback_read(session, feedback_model.id)
 
-    await message.reply_text('✅ Чудово, я уже відповів користувачу!')
+    await query.edit_message_text('✅ Чудово, я уже відповів користувачу!', reply_markup=None)
 
     context.user_data.clear()
+
     return ConversationHandler.END
 
 
+async def edit_reply_feedback_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    query = update.callback_query
+    await query.answer()
+
+    edit_text = '🆗 Надішли у наступному повідомленні відповідно змінене.'
+    context.user_data['markup_msg'] = await query.edit_message_text(edit_text, reply_markup=cancel_keyboard)
+
+    return REPLY_START
+
+
 feedback_handler = ConversationHandler(
-    entry_points=[CommandHandler('feedback', start_feedback_command)],
+    entry_points=[CommandHandler('feedback', write_feedback)],
     states={
-        FEEDBACK_START: [
-            CallbackQueryHandler(cancel, pattern='^cancel$'),
-            CallbackQueryHandler(get_feedback_type, pattern=r'\w')
-        ],
         GET_MESSAGE: [
             CallbackQueryHandler(cancel, pattern='^cancel$'),
-            CallbackQueryHandler(back_to_feedback_start, pattern='^back$'),
             MessageHandler(filters.TEXT, feedback_get_user_text)
         ]
     },
@@ -307,19 +184,12 @@ feedback_reply_handler = ConversationHandler(
     states={
         REPLY_START: [
             CallbackQueryHandler(cancel, pattern='^cancel$'),
-            CallbackQueryHandler(make_instant_issue, pattern='^instant_issue$'),
-            CallbackQueryHandler(make_issue, pattern='^write_issue$'),
-            CallbackQueryHandler(reply_to, pattern='^reply_to$'),
+            MessageHandler(filters.TEXT, feedback_reply_check)
         ],
-        REPLY_USER: [
+        SUBMIT_SENDING: [
             CallbackQueryHandler(cancel, pattern='^cancel$'),
-            CallbackQueryHandler(back_to_reply_start, pattern='^back$'),
-            MessageHandler(filters.TEXT, feedback_reply_text)
-        ],
-        MAKE_ISSUE: [
-            CallbackQueryHandler(cancel, pattern='^cancel$'),
-            CallbackQueryHandler(back_to_reply_start, pattern='^back$'),
-            MessageHandler(filters.TEXT, write_issue)
+            CallbackQueryHandler(send_reply_feedback, pattern='^confirm$'),
+            CallbackQueryHandler(edit_reply_feedback_text, pattern='^edit$')
         ]
     },
     fallbacks=[
