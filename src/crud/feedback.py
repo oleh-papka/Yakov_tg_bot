@@ -1,6 +1,7 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from models import FeedbackReply
 from src.models import Feedback
 
 
@@ -36,7 +37,6 @@ async def mark_feedback_read(session: AsyncSession, feedback_id: int) -> None:
 
 
 async def create_feedback(session: AsyncSession,
-                          feedback_type: str,
                           user_id: int,
                           msg_id: int,
                           msg_text: str,
@@ -47,7 +47,6 @@ async def create_feedback(session: AsyncSession,
         read_flag = False
 
     feedback_model = Feedback(user_id=user_id,
-                              feedback_type=feedback_type,
                               msg_id=msg_id,
                               msg_text=msg_text,
                               read_flag=read_flag)
@@ -67,3 +66,20 @@ async def get_unread_feedbacks(session: AsyncSession):
     feedbacks = result.scalars().all()
 
     return feedbacks
+
+
+async def create_feedback_reply(session: AsyncSession,
+                                feedback_id: int,
+                                msg_id: int,
+                                msg_text: str):
+    """Adds feedback reply"""
+
+    feedback_reply_model = FeedbackReply(feedback_id=feedback_id,
+                                         msg_id=msg_id,
+                                         msg_text=msg_text)
+    session.add(feedback_reply_model)
+    await session.commit()
+
+    await session.refresh(feedback_reply_model)
+
+    return feedback_reply_model
