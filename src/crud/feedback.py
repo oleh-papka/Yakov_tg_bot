@@ -1,14 +1,14 @@
-from sqlalchemy import select
+from sqlalchemy import select, literal
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from models import FeedbackReply
-from src.models import Feedback
+from models import Feedback
 
 
 async def get_feedback_by_id(session: AsyncSession, feedback_id: int) -> Feedback:
     """Retrieve feedback from msg_id"""
 
-    query = select(Feedback).where(Feedback.id == feedback_id)
+    query = select(Feedback).where(Feedback.id == literal(feedback_id))
     result = await session.execute(query)
     feedback = result.scalars().first()
 
@@ -18,7 +18,7 @@ async def get_feedback_by_id(session: AsyncSession, feedback_id: int) -> Feedbac
 async def get_feedback_by_user_id(session: AsyncSession, user_id: int):
     """Retrieve feedbacks from user_id"""
 
-    query = select(Feedback).where(Feedback.user_id == user_id)
+    query = select(Feedback).where(Feedback.user_id == literal(user_id))
     result = await session.execute(query)
     feedbacks = result.scalars().all()
 
@@ -28,7 +28,7 @@ async def get_feedback_by_user_id(session: AsyncSession, user_id: int):
 async def mark_feedback_read(session: AsyncSession, feedback_id: int) -> None:
     """Update read_flag for feedback by message_id"""
 
-    query = select(Feedback).where(Feedback.id == feedback_id)
+    query = select(Feedback).where(Feedback.id == literal(feedback_id))
     result = await session.execute(query)
     feedback = result.scalars().first()
 
@@ -61,7 +61,7 @@ async def create_feedback(session: AsyncSession,
 async def get_unread_feedbacks(session: AsyncSession):
     """Retrieve feedbacks from user_id"""
 
-    query = select(Feedback).where(Feedback.read_flag == False)
+    query = select(Feedback).where(Feedback.read_flag == literal(False))
     result = await session.execute(query)
     feedbacks = result.scalars().all()
 

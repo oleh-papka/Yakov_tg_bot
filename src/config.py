@@ -25,7 +25,8 @@ class Config:
     CMC_API_TOKEN = load_env_variable('CMC_API_TOKEN')  # CoinMarketCup API token
     SCREENSHOT_API_TOKEN = load_env_variable('SCREENSHOT_API_TOKEN')  # Screenshot api token
     OWM_API_TOKEN = load_env_variable('OWM_API_TOKEN')  # OpenWeatherMap API token
-    # GITHUB_TOKEN = load_env_variable('GITHUB_TOKEN')    # GitHub API token | will be removed in the next versions
+    BINANCE_API_TOKEN = load_env_variable('BINANCE_API_TOKEN')  # Binance API token
+    BINANCE_API_PRIVAT_TOKEN = load_env_variable('BINANCE_API_PRIVAT_TOKEN')  # Binance privat API token
 
     DB_URL = load_env_variable('DB_URL')  # URL to your db
 
@@ -33,9 +34,9 @@ class Config:
     #               Heroku hosting only. Currently unsupported!               #
     ###########################################################################
     WEBHOOK_FLAG = bool(load_env_variable('WEBHOOK_FLAG', int))  # Enables webhooks
-    BOT_LINK = load_env_variable('BOT_LINK', error_if_none=WEBHOOK_FLAG)
+    BOT_LINK = load_env_variable('BOT_LINK', raise_if_none=WEBHOOK_FLAG)
     # Heroku dynamically allocates application port and sets it to `PORT` env var
-    BOT_PORT = load_env_variable('PORT', int, error_if_none=WEBHOOK_FLAG)
+    BOT_PORT = load_env_variable('PORT', int, raise_if_none=WEBHOOK_FLAG)
 
     ###########################################################################
     #                        Do not change line below ⬇                       #
@@ -45,7 +46,7 @@ class Config:
     SPACING = '⠀⠀  '  # Main whitespace characters used in formatting
     SPACING_SMALL = '⠀⠀'
 
-    BOT_VERSION = 'v0.2.0-dev'
+    BOT_VERSION = 'v0.2.0'
 
     BOT_COMMANDS = [
         ('weather', 'Погода', False),

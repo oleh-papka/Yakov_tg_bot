@@ -2,9 +2,9 @@ from telegram import Update
 from telegram.constants import ParseMode
 from telegram.ext import CommandHandler, ContextTypes
 
-from src.config import Config
-from src.utils import escape_md2_no_links
-from src.utils.message_utils import send_typing_action
+from config import Config
+from utils import escape_md2_no_links
+from utils.message_utils import send_typing_action
 
 
 @send_typing_action

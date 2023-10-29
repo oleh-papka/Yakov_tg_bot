@@ -4,17 +4,17 @@ from telegram import InlineKeyboardMarkup, InlineKeyboardButton, Update
 from telegram.ext import ConversationHandler, CommandHandler, CallbackQueryHandler, ContextTypes, MessageHandler, \
     filters
 
-from src.config import Config
-from src.crud.city import create_city, get_city_by_name
-from src.crud.crypto_currency import get_crypto_by_user_id, get_crypto_by_abbr
-from src.crud.currency import get_curr_by_user_id, get_curr_by_name
-from src.crud.user import create_or_update_user, get_user_by_id, update_user
-from src.handlers.canel_conversation import cancel, cancel_back_keyboard
-from src.models.errors import CityFetchError
-from src.utils.db_utils import get_session
-from src.utils.message_utils import send_typing_action
-from src.utils.time_utils import UserTime
-from src.utils.weather_utils import OpenWeatherMapAPI, SinoptikScraper
+from config import Config
+from crud.city import create_city, get_city_by_name
+from crud.crypto_currency import get_crypto_by_user_id, get_crypto_by_abbr
+from crud.currency import get_curr_by_user_id, get_curr_by_name
+from crud.user import create_or_update_user, get_user_by_id, update_user
+from handlers.canel_conversation import cancel, cancel_back_keyboard
+from models.errors import CityFetchError
+from utils.db_utils import get_session
+from utils.message_utils import send_typing_action
+from utils.time_utils import UserTime
+from utils.weather_utils import OpenWeatherMapAPI, SinoptikScraper
 
 SETTINGS_START, CITY_SETTINGS, TIMEZONE_SETTINGS, CRYPTO_SETTINGS, CURR_SETTINGS = 1, 2, 3, 4, 5
 

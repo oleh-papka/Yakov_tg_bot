@@ -5,8 +5,8 @@ from dateutil import relativedelta
 from telegram import Update
 from telegram.ext import MessageHandler, filters, ContextTypes
 
-from src.config import Config
-from src.utils.message_utils import send_typing_action
+from config import Config
+from utils.message_utils import send_typing_action
 
 from_date_regex = re.compile(r'^\d{1,2}(\.|-|/|\s)\d{1,2}(\.|-|/|\s)\d{4}$')
 from_to_date_regex = re.compile(

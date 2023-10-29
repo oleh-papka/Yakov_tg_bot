@@ -1,13 +1,13 @@
 from telegram import Update
 from telegram.ext import CommandHandler, ContextTypes
 
-from src.crud.currency import get_curr_by_user_id
-from src.crud.user import get_user_by_id
-from src.models.errors import MinFinParseError, MinFinFetchError, Privat24APIError
-from src.utils.currency_utils import get_min_fin_price, Privat24API, compose_output
-from src.utils.db_utils import get_session
-from src.utils.message_utils import escape_md2, send_typing_action
-from src.utils.time_utils import UserTime
+from crud.currency import get_curr_by_user_id
+from crud.user import get_user_by_id
+from models.errors import MinFinParseError, MinFinFetchError, Privat24APIError
+from utils.currency_utils import MinFinScrapper, Privat24API, compose_currencies_msg
+from utils.db_utils import get_session
+from utils.message_utils import escape_md2, send_typing_action
+from utils.time_utils import UserTime
 
 
 @send_typing_action
@@ -29,13 +29,13 @@ async def currency(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         return
 
     try:
-        ccy_data = get_min_fin_price()
+        ccy_data = MinFinScrapper.get_currencies_prices()
         ccy_data["USD"] |= Privat24API.get_usd_price()
     except (MinFinParseError, MinFinFetchError, Privat24APIError):
         await message.reply_text("Ситуація, не можу отримати дані...")
         return
 
-    ccy_text += compose_output(ccy_data, ccy_models)
+    ccy_text += compose_currencies_msg(ccy_data, ccy_models)
 
     await message.reply_markdown_v2(escape_md2(ccy_text, exclude=['*', '_']))
 

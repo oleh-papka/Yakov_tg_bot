@@ -5,25 +5,25 @@ from telegram.ext import (Application,
                           MessageHandler,
                           filters)
 
-from src.commands import (help_command_handler,
-                          start_command_handler,
-                          settings_conversation_handler,
-                          ru_losses_handler,
-                          crypto_command_handler,
-                          currency_command_handler,
-                          profile_conversation_handler,
-                          feedback_handler,
-                          feedback_reply_handler,
-                          weather_command_handler,
-                          precheckout_handler,
-                          successful_payment_handler,
-                          tip_developer_handler)
-from src.config import Config
-from src.handlers import (error_handler,
-                          unknown_messages,
-                          days_passed_handler,
-                          currency_convertor_handler)
-from src.utils.db_utils import check_db
+from commands import (help_command_handler,
+                      start_command_handler,
+                      settings_conversation_handler,
+                      ru_losses_handler,
+                      crypto_command_handler,
+                      currency_command_handler,
+                      profile_conversation_handler,
+                      feedback_handler,
+                      feedback_reply_handler,
+                      weather_command_handler,
+                      precheckout_handler,
+                      successful_payment_handler,
+                      tip_developer_handler)
+from config import Config
+from handlers import (error_handler,
+                      unknown_messages,
+                      days_passed_handler,
+                      currency_convertor_handler)
+from utils.db_utils import check_db
 
 logger = logging.getLogger(__name__)
 

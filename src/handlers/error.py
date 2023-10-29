@@ -1,4 +1,3 @@
-import html
 import json
 import logging
 import traceback
@@ -7,8 +6,8 @@ from telegram import Update
 from telegram.constants import ParseMode
 from telegram.ext import ContextTypes
 
-from src.config import Config
-from src.utils.message_utils import send_typing_action
+from config import Config
+from utils.message_utils import send_typing_action, escape_md2
 
 logger = logging.getLogger(__name__)
 
@@ -30,17 +29,27 @@ async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> N
     # Inform developer
     msg = (
         f"⚠ Ситуація\n\n"
-        f"<pre>update = {html.escape(json.dumps(update_str, indent=2, ensure_ascii=False))}</pre>"
+        f"```json\n"
+        f"update = {escape_md2(json.dumps(update_str, indent=2, ensure_ascii=False))}"
+        f"```"
     )
     msg2 = (
-        f"<pre>context.chat_data = {html.escape(str(context.chat_data))}</pre>\n\n"
-        f"<pre>context.user_data = {html.escape(str(context.user_data))}</pre>"
+        f"```python\n"
+        f"context.chat_data = {escape_md2(str(context.chat_data))}"
+        f"```"
+        f"\n```python\n"
+        f"context.user_data = {escape_md2(str(context.user_data))}"
+        f"```"
     )
-    msg3 = f"<pre>{html.escape(tb_string)}</pre>"
+    msg3 = (
+        f"```python\n"
+        f"{escape_md2(tb_string)}"
+        f"```"
+    )
 
-    await context.bot.send_message(chat_id=Config.OWNER_ID, text=msg, parse_mode=ParseMode.HTML)
-    await context.bot.send_message(chat_id=Config.OWNER_ID, text=msg2, parse_mode=ParseMode.HTML)
-    await context.bot.send_message(chat_id=Config.OWNER_ID, text=msg3, parse_mode=ParseMode.HTML)
+    await context.bot.send_message(chat_id=Config.OWNER_ID, text=msg, parse_mode=ParseMode.MARKDOWN_V2)
+    await context.bot.send_message(chat_id=Config.OWNER_ID, text=msg2, parse_mode=ParseMode.MARKDOWN_V2)
+    await context.bot.send_message(chat_id=Config.OWNER_ID, text=msg3, parse_mode=ParseMode.MARKDOWN_V2)
 
     # Inform user
     error_text = 'Перепрошую, щось пішло не так. Я уже повідомив розробника.\n\nПідказка - /help'

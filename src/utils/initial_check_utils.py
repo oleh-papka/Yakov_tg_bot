@@ -2,7 +2,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.engine import Inspector
 from sqlalchemy.exc import SQLAlchemyError
 
-from src.config import Config
+from config import Config
 
 
 def check_db_connection() -> bool:
