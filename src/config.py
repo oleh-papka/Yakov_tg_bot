@@ -53,10 +53,10 @@ class Config:
         ('crypto', 'Трішки про крипту', False),
         ('currency', 'Дані по валюті', False),
         ('ruloss', 'Втрати кацапні', False),
-        ('tip_developer', 'Тестові донейти', False),
-        ('message_users', 'Повідомити користувачів', True),
         ('feedback', 'Надіслати відгук', False),
         ('settings', 'Налаштування', False),
+        ('tip_developer', 'Тестові донейти', False),
+        ('message_users', 'Повідомити користувачів', True),
         ('help', 'Підказка', False)
     ]
 

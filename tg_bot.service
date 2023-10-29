@@ -1,0 +1,17 @@
+[Unit]
+Description=Yakov Telegram bot
+# Replace with your docker services
+After=snap.docker.dockerd.service
+Requires=snap.docker.dockerd.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+User=root
+RestartSec=2
+# Replace with your docker-compose path and also path to your docker-composae.yaml file
+ExecStart=/...your_path.../docker-compose -f /...your_path.../Yakov_tg_bot/docker-compose.yaml up -d
+ExecStop=/...your_path.../docker-compose -f /...your_path.../Yakov_tg_bot/docker-compose.yaml down
+
+[Install]
+WantedBy=multi-user.target
