@@ -1,5 +1,4 @@
 import json
-import re
 
 import requests
 from bs4 import BeautifulSoup
@@ -7,6 +6,33 @@ from sqlalchemy import Result
 
 from src.config import Config
 from src.models.errors import Privat24APIError, MinFinFetchError, MinFinParseError
+
+
+def compose_currencies_msg(ccy_data: dict, ccy_models: Result) -> str:
+    msg = ""
+
+    for model in ccy_models:
+        name = model.name.upper()
+        emoji = model.symbol
+        ccy = ccy_data[name]
+        nb_text = str()
+        msg += f"{emoji} *{name.upper()}*\n"
+
+        for market_type, price in ccy.items():
+            if len(price) == 2:
+                if market_type == 'ПриватБанк':
+                    msg += '\n'
+
+                msg += f"{Config.SPACING}{market_type}:  {price[0]:,.2f} | {price[1]:,.2f}\n"
+
+                if market_type == 'Privat24':
+                    msg += '\n'
+            else:
+                nb_text = f"{Config.SPACING}{market_type}:  {price[0]:,.2f}\n"
+
+        msg += f"{nb_text}\n"
+
+    return msg
 
 
 class Privat24API:
@@ -40,79 +66,62 @@ class Privat24API:
         return ccy_data
 
 
-def get_min_fin_price() -> dict:
-    # Get html table from MinFin
-    all_currencies_url = "https://minfin.com.ua/ua/currency/"
+class MinFinScrapper:
+    base_url = 'https://minfin.com.ua/ua/{}'
 
-    response = requests.get(all_currencies_url)
-    if not response.ok:
-        raise MinFinFetchError
+    @staticmethod
+    def get_currencies_prices():
+        endpoint_url = 'currency/'
+        request_url = MinFinScrapper.base_url.format(endpoint_url)
 
-    soup = BeautifulSoup(response.text, 'lxml')
-    table = soup.select(
-        "#root > div > section > div > div > div > main > section.bvp3d3-1.fwOefR > div.bvp3d3-8.bTJUGM > "
-        "div:nth-child(1) > div.sc-1x32wa2-0.dWgyGF.bvp3d3-10.kNRLfR > table")
-    if not table:
-        raise MinFinParseError
+        response = requests.get(request_url)
+        if not response.ok:
+            raise MinFinFetchError
 
-    rows = table[0].find_all('tr')[1:]
-    if not rows:
-        raise MinFinParseError
+        soup = BeautifulSoup(response.text, 'lxml')
+        table = soup.select(
+            "#root > div > section > div > div > div > main > section.bvp3d3-1.fwOefR > div.bvp3d3-8.bTJUGM > "
+            "div:nth-child(1) > div.sc-1x32wa2-0.dWgyGF.bvp3d3-10.kNRLfR > table")
 
-    ccy_data = {}
+        if not table:
+            raise MinFinParseError
 
-    for row in rows[:-1]:
-        tds = row.find_all('td')
-        ccy = tds[0].a.text.strip().upper()
+        rows = table[0].find_all('tr')[1:]
+        if not rows:
+            raise MinFinParseError
 
-        bank_buy = float(tds[1].contents[0].next.strip().replace(',', '.'))
-        bank_sell = float(tds[2].contents[0].next.strip().replace(',', '.'))
+        ccy_data = {}
 
-        nb_price = [float(tds[3].contents[0].next.strip().replace(',', '.'))]
+        for row in rows[:-1]:
+            tds = row.find_all('td')
+            ccy = tds[0].a.text.strip().upper()
 
-        ccy_data[ccy] = {
-            "НБУ": nb_price,
-            "Сер. банк": [bank_buy, bank_sell],
-        }
+            bank_buy = float(tds[1].contents[0].next.strip().replace(',', '.'))
+            bank_sell = float(tds[2].contents[0].next.strip().replace(',', '.'))
+            nb_price = [float(tds[3].contents[0].next.strip().replace(',', '.'))]
 
-    table2 = soup.select(
-        "#root > div > section > div > div > div > main > section.bvp3d3-1.fwOefR > div.bvp3d3-8.bTJUGM > "
-        "div.bvp3d3-9.bvp3d3-12.FqORR.UIaOD > div.sc-1x32wa2-0.dWgyGF.bvp3d3-10.bvp3d3-11.kNRLfR.cLIHts > table")
-    if not table2:
-        raise MinFinParseError
+            ccy_data[ccy] = {
+                "НБУ": nb_price,
+                "Сер. банк": [bank_buy, bank_sell],
+            }
 
-    rows2 = table[0].find_all('tr')[1:]
-    if not rows2:
-        raise MinFinParseError
+        table2 = soup.select(
+            "#root > div > section > div > div > div > main > section.bvp3d3-1.fwOefR > div.bvp3d3-8.bTJUGM > "
+            "div.bvp3d3-9.bvp3d3-12.FqORR.UIaOD > div.sc-1x32wa2-0.dWgyGF.bvp3d3-10.bvp3d3-11.kNRLfR.cLIHts > table")
+        if not table2:
+            raise MinFinParseError
 
-    for row in rows2[:-1]:
-        tds = row.find_all('td')
-        ccy = tds[0].a.text.strip().upper()
+        rows2 = table[0].find_all('tr')[1:]
+        if not rows2:
+            raise MinFinParseError
 
-        cash_buy = float(tds[1].contents[0].next.strip().replace(',', '.'))
-        cash_sell = float(tds[2].contents[0].next.strip().replace(',', '.'))
+        for row in rows2[:-1]:
+            tds = row.find_all('td')
+            ccy = tds[0].a.text.strip().upper()
 
-        ccy_data[ccy]["Готівка"] = [cash_buy, cash_sell]
+            cash_buy = float(tds[1].contents[0].next.strip().replace(',', '.'))
+            cash_sell = float(tds[2].contents[0].next.strip().replace(',', '.'))
 
-    return ccy_data
+            ccy_data[ccy]["Обмінники"] = [cash_buy, cash_sell]
 
-
-def compose_output(ccy_data: dict, ccy_models: Result) -> str:
-    text = ""
-
-    for model in ccy_models:
-        name = model.name.upper()
-        emoji = model.symbol
-        ccy = ccy_data[name]
-        nb_text = str()
-        text += f"{emoji} *{name.upper()}*\n"
-
-        for market_type, price in ccy.items():
-            if len(price) == 2:
-                text += f"{Config.SPACING}{market_type}:  _{price[0]:,.2f}₴_ | _{price[1]:,.2f}₴_\n"
-            else:
-                nb_text = f"{Config.SPACING}{market_type}:  _{price[0]:,.2f}₴_\n"
-
-        text += f"{nb_text}\n"
-
-    return text
+        return ccy_data

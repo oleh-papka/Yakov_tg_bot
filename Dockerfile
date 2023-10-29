@@ -10,4 +10,4 @@ COPY src /bot/src
 COPY alembic /bot/alembic
 COPY alembic.ini /bot/
 
-CMD ["python", "src/main.py"]
+CMD ["python3", "src/main.py"]

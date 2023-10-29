@@ -4,7 +4,7 @@ from telegram import Update
 from telegram.ext import ContextTypes, MessageHandler, filters
 
 from src.config import Config
-from src.utils.currency_utils import Privat24API, get_min_fin_price
+from src.utils.currency_utils import Privat24API, MinFinScrapper
 from src.utils.message_utils import send_typing_action, escape_md2
 
 from_uah_to_usd = re.compile(r'^\d+[,.]?\d+\s?(uah|грн)$')
@@ -17,7 +17,7 @@ async def currency_converter(update: Update, context: ContextTypes.DEFAULT_TYPE)
     user_text = message.text.lower()
     amount = float(re.sub('\s?(uah|грн|usd|дол)', '', user_text).replace(',', '.'))
 
-    ccy_data = get_min_fin_price()
+    ccy_data = MinFinScrapper.get_currencies_prices()
     ccy_data["USD"] |= Privat24API.get_usd_price()
 
     usd_data = ccy_data["USD"]

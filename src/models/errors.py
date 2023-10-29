@@ -24,3 +24,11 @@ class MinFinFetchError(Exception):
 
 class MinFinParseError(Exception):
     pass
+
+
+class BinanceAPIError(Exception):
+    pass
+
+
+class EnvNotProvidedError(Exception):
+    pass
