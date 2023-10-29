@@ -1,6 +1,6 @@
 import telegram
 from loguru import logger
-from sqlalchemy import update, select
+from sqlalchemy import update, select, literal
 from sqlalchemy.ext.asyncio import AsyncSession
 
 import models
@@ -9,7 +9,7 @@ import models
 async def get_user_by_id(session: AsyncSession, user_id: int) -> models.User:
     """Retrieve user by user_id"""
 
-    query = select(models.User).where(models.User.id == user_id)
+    query = select(models.User).where(models.User.id == literal(user_id))
     result = await session.execute(query)
     user = result.scalars().first()
 
@@ -22,7 +22,7 @@ async def get_all_users(session: AsyncSession, active_flag: None | bool = None):
     base_query = select(models.User)
 
     if active_flag:
-        users = await session.execute(base_query.where(models.User.active == True))
+        users = await session.execute(base_query.where(models.User.active == literal(True)))
     else:
         users = await session.execute(base_query)
 
@@ -49,7 +49,7 @@ async def create_user(session: AsyncSession, user: telegram.User) -> models.User
 async def update_user(session: AsyncSession, user: telegram.User, user_data: dict) -> None:
     """Update specific parameter for user"""
 
-    update_query = update(models.User).where(models.User.id == user.id).values(user_data)
+    update_query = update(models.User).where(models.User.id == literal(user.id)).values(user_data)
 
     await session.execute(update_query)
     await session.commit()
