@@ -3,7 +3,7 @@ from loguru import logger
 from sqlalchemy import update, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src import models
+import models
 
 
 async def get_user_by_id(session: AsyncSession, user_id: int) -> models.User:

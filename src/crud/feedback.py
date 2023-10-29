@@ -2,7 +2,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from models import FeedbackReply
-from src.models import Feedback
+from models import Feedback
 
 
 async def get_feedback_by_id(session: AsyncSession, feedback_id: int) -> Feedback:

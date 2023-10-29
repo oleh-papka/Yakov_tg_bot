@@ -1,6 +1,6 @@
 import requests
 
-from src.config import Config
+from config import Config
 
 
 def compose_coins_msg(coins: dict) -> str:

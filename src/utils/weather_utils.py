@@ -3,10 +3,10 @@ from urllib.parse import quote, unquote
 
 import requests
 
-from src.config import Config
-from src.models import City
-from src.models.errors import CityFetchError, WeatherFetchError, SinoptikURLFetchError, ScreenshotAPIError
-from src.utils.time_utils import UserTime
+from config import Config
+from models import City
+from models.errors import CityFetchError, WeatherFetchError, SinoptikURLFetchError, ScreenshotAPIError
+from utils.time_utils import UserTime
 
 
 class TemperatureFeels:

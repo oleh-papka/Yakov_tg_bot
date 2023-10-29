@@ -1,7 +1,7 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.models import Currency, User
+from models import Currency, User
 
 
 async def get_curr_by_user_id(session: AsyncSession, user_id: int):

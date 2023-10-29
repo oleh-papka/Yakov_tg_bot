@@ -9,15 +9,15 @@ from telegram.ext import (filters,
                           ContextTypes,
                           CallbackQueryHandler)
 
-from src.config import Config
-from src.crud.feedback import (create_feedback,
+from config import Config
+from crud.feedback import (create_feedback,
                                create_feedback_reply,
                                mark_feedback_read,
                                get_feedback_by_id)
-from src.crud.user import create_or_update_user
-from src.handlers.canel_conversation import cancel, cancel_keyboard
-from src.utils.db_utils import get_session
-from src.utils.message_utils import escape_md2, escape_md2_no_links, send_typing_action
+from crud.user import create_or_update_user
+from handlers.canel_conversation import cancel, cancel_keyboard
+from utils.db_utils import get_session
+from utils.message_utils import escape_md2, escape_md2_no_links, send_typing_action
 
 GET_MESSAGE, REPLY_START, SUBMIT_SENDING = 1, 2, 3
 

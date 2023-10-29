@@ -2,12 +2,12 @@ from telegram import Update
 from telegram.constants import ParseMode, ChatAction
 from telegram.ext import ContextTypes, CommandHandler
 
-from src.crud.user import create_or_update_user, get_user_by_id
-from src.utils import escape_md2_no_links
-from src.utils.db_utils import get_session
-from src.utils.message_utils import send_upload_photo_action
-from src.utils.time_utils import UserTime
-from src.utils.weather_utils import OpenWeatherMapAPI, ScreenshotAPI
+from crud.user import create_or_update_user, get_user_by_id
+from utils import escape_md2_no_links
+from utils.db_utils import get_session
+from utils.message_utils import send_upload_photo_action
+from utils.time_utils import UserTime
+from utils.weather_utils import OpenWeatherMapAPI, ScreenshotAPI
 
 
 @send_upload_photo_action

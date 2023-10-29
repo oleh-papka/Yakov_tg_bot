@@ -2,10 +2,10 @@ from telegram import Update
 from telegram.ext import CommandHandler, ContextTypes
 
 from config import Config
-from src.crud.user import get_user_by_id
-from src.utils.db_utils import get_session
-from src.utils.message_utils import escape_md2, send_typing_action
-from src.utils.time_utils import UserTime
+from crud.user import get_user_by_id
+from utils.db_utils import get_session
+from utils.message_utils import escape_md2, send_typing_action
+from utils.time_utils import UserTime
 from utils.binance_utils import compose_binance_msg, BinanceAPI
 from utils.cmc_utils import CoinMarketCupAPI, compose_coins_msg
 

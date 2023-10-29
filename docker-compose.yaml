@@ -9,6 +9,7 @@ services:
       PGDATA: "/var/lib/postgresql/data/pgdata"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./initial_dump.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
       - "5432:5432"
     healthcheck:
@@ -21,11 +22,12 @@ services:
 
   tg-bot:
     build: .
+    env_file:
+      - .env
     environment:
       DEBUG_FLAG: ${DEBUG_FLAG}
       BOT_TOKEN: ${BOT_TOKEN}
       OWNER_ID: ${OWNER_ID}
-      TESTER_ID: ${TESTER_ID}
       CMC_API_TOKEN: ${CMC_API_TOKEN}
       SCREENSHOT_API_TOKEN: ${SCREENSHOT_API_TOKEN}
       OWM_API_TOKEN: ${OWM_API_TOKEN}

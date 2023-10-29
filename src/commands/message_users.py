@@ -3,10 +3,10 @@ from telegram.ext import ContextTypes, ConversationHandler, CommandHandler, Call
     filters
 
 from config import Config
-from src.crud.user import create_or_update_user, get_all_users, update_user
-from src.handlers.canel_conversation import cancel
-from src.utils.db_utils import get_session
-from src.utils.message_utils import send_typing_action
+from crud.user import create_or_update_user, get_all_users, update_user
+from handlers.canel_conversation import cancel
+from utils.db_utils import get_session
+from utils.message_utils import send_typing_action
 
 GET_MESSAGE, SEND_MESSAGE = 1, 2
 

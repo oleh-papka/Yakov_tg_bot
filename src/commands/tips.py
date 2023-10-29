@@ -2,11 +2,11 @@ from telegram import Update, LabeledPrice
 from telegram.constants import ParseMode
 from telegram.ext import ContextTypes, CommandHandler, PreCheckoutQueryHandler, MessageHandler, filters
 
-from src.config import Config
-from src.crud.user import create_or_update_user
-from src.utils import escape_md2_no_links
-from src.utils.db_utils import get_session
-from src.utils.message_utils import send_typing_action
+from config import Config
+from crud.user import create_or_update_user
+from utils import escape_md2_no_links
+from utils.db_utils import get_session
+from utils.message_utils import send_typing_action
 
 
 @send_typing_action

@@ -4,8 +4,8 @@ import requests
 from bs4 import BeautifulSoup
 from sqlalchemy import Result
 
-from src.config import Config
-from src.models.errors import Privat24APIError, MinFinFetchError, MinFinParseError
+from config import Config
+from models.errors import Privat24APIError, MinFinFetchError, MinFinParseError
 
 
 def compose_currencies_msg(ccy_data: dict, ccy_models: Result) -> str:

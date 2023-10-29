@@ -3,12 +3,12 @@ import re
 from telegram import Update
 from telegram.ext import ContextTypes, MessageHandler, filters
 
-from src.config import Config
-from src.utils.currency_utils import Privat24API, MinFinScrapper
-from src.utils.message_utils import send_typing_action, escape_md2
+from config import Config
+from utils.currency_utils import Privat24API, MinFinScrapper
+from utils.message_utils import send_typing_action, escape_md2
 
-from_uah_to_usd = re.compile(r'^\d+[,.]?\d+\s?(uah|грн)$')
-from_usd_to_uah = re.compile(r'^\d+[,.]?\d+\s?(usd|дол)$')
+from_uah_to_usd = re.compile(r'^(\d+[,.]?|\d+)\s?(uah|грн)$')
+from_usd_to_uah = re.compile(r'^(\d+[,.]?|\d+)\s?(usd|дол)$')
 
 
 @send_typing_action

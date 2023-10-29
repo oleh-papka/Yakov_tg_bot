@@ -1,8 +1,7 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.crud.user import get_user_by_id
-from src.models import City
+from models import City
 
 
 async def get_city_by_name(session: AsyncSession, city_name: str) -> City | None:

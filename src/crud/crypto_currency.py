@@ -1,7 +1,7 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.models import CryptoCurrency, User
+from models import CryptoCurrency, User
 
 
 async def get_crypto_by_user_id(session: AsyncSession, user_id: int):

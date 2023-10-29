@@ -1,7 +1,7 @@
 from telegram import Update
 from telegram.ext import ContextTypes
 
-from src.utils.message_utils import send_typing_action
+from utils.message_utils import send_typing_action
 
 
 @send_typing_action
