@@ -5,7 +5,8 @@ After=snap.docker.dockerd.service
 Requires=snap.docker.dockerd.service
 
 [Service]
-Type=oneshot
+Type=simple
+Restart=always
 RemainAfterExit=yes
 User=root
 RestartSec=2
