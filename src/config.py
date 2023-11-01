@@ -43,8 +43,7 @@ class Config:
     ###########################################################################
     CREATOR_ID = 514328460  # Please credit the author (olegpapka2@gmail.com)
 
-    SPACING = '⠀⠀  '  # Main whitespace characters used in formatting
-    SPACING_SMALL = '⠀⠀'
+    SPACING = '⠀⠀⠀'  # Main whitespace characters used in formatting
 
     BOT_VERSION = 'v0.2.0'
 

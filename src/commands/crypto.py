@@ -3,11 +3,10 @@ from telegram.ext import CommandHandler, ContextTypes
 
 from config import Config
 from crud.user import get_user_by_id
-from utils.db_utils import get_session
-from utils.message_utils import escape_md2, send_typing_action
-from utils.time_utils import UserTime
 from utils.binance_utils import compose_binance_msg, BinanceAPI
 from utils.cmc_utils import CoinMarketCupAPI, compose_coins_msg
+from utils.db_utils import get_session
+from utils.message_utils import escape_md2, send_typing_action
 
 
 @send_typing_action
@@ -31,8 +30,7 @@ async def crypto_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         await message.reply_text(error_text)
         return
 
-    time = UserTime.get_time_from_offset(user_model.timezone_offset)['date_time']
-    crypto_text = f'CoinMarketCup дані на (*{time}*):\n\n'
+    crypto_text = f'CoinMarketCup:\n\n'
     crypto_text += compose_coins_msg(crypto_data)
 
     if user.id == Config.OWNER_ID:
@@ -41,7 +39,7 @@ async def crypto_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
         crypto_text += compose_binance_msg(wallet_data, )
 
-    await message.reply_markdown_v2(escape_md2(crypto_text, exclude=['*', '_']))
+    await message.reply_markdown_v2(escape_md2(crypto_text, exclude=['*', '_', '`']))
 
 
 crypto_command_handler = CommandHandler('crypto', crypto_command)

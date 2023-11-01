@@ -1,4 +1,5 @@
 import logging
+import math
 
 from binance.client import Client
 
@@ -9,22 +10,41 @@ from utils.currency_utils import MinFinScrapper
 logger = logging.getLogger(__name__)
 
 
+def round_down(num: float, digits: int = None):
+    if num == 0:
+        return 0
+
+    if digits:
+        factor = 10 ** digits
+    else:
+        factor = 10 ** (-math.floor(math.log10(abs(num))))
+
+    return math.floor(num * factor) * (1 / factor)
+
+
 def compose_binance_msg(funding_wallet_data: list) -> str:
     msg = '\n💸 Binance гаманець:\n'
     sum_price_usdt = 0
 
     for coin in funding_wallet_data:
         coin_free = float(coin['free'])
+
         if coin_free > 1:
-            coin_free = round(coin_free, 2)
+            coin_free = round_down(coin_free, 2)
+        else:
+            coin_free = round_down(coin_free)
 
         usdt_price = coin['price'].get('usdt')
-        msg += f"{Config.SPACING}*{coin['asset']}*: {coin_free:,} | USDT {usdt_price:,.2f}\n"
+
+        if coin['asset'] == 'USDT':
+            msg += f"{Config.SPACING}`{coin['asset']} {coin_free:,}`\n"
+        else:
+            msg += f"{Config.SPACING}*{coin['asset']}* {coin_free:,} *|* `USDT {usdt_price:,.2f}`\n"
 
         sum_price_usdt += usdt_price
 
     usd_price = MinFinScrapper.get_currencies_prices()['USD']['НБУ'][0]
-    msg += f'\n  Сум. USDT: {sum_price_usdt:,.2f} ( UAH {sum_price_usdt * usd_price:,.2f} )'
+    msg += f'\nСума: `USDT {sum_price_usdt:,.2f}` | `UAH {sum_price_usdt * usd_price:,.2f}`'
 
     return msg
 

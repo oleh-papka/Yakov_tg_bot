@@ -30,9 +30,9 @@ def compose_coins_msg(coins: dict) -> str:
         else:
             secondary_emoji = ''
 
-        msg += f'{main_emoji} *{coin_name}* ({coin_abbr}):\n'
-        msg += f'{Config.SPACING}{secondary_emoji}*{price:,}$*:\n'
-        msg += f'{Config.SPACING}( {change_1h:,.2f}% *|* {change_24h:,.2f}% *|* {change_7d:,.2f}% )\n\n'
+        msg += f'{main_emoji} *{coin_name}* ({coin_abbr})\n'
+        msg += f'{Config.SPACING}{secondary_emoji}`$ {price:,}`\n'
+        msg += f'{Config.SPACING}1h: {change_1h:,.2f}% *|* 24h: {change_24h:,.2f}% *|* 7d: {change_7d:,.2f}%\n\n'
 
     return msg
 

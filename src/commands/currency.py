@@ -20,7 +20,7 @@ async def currency(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         user_time = UserTime(offset=user_model.timezone_offset)
         ccy_models = await get_curr_by_user_id(session, user.id)
 
-    ccy_text = f"Курси валют (*{user_time.date_repr(style_flag=True)}*)\n\n"
+    ccy_text = f"Курси валют:\n\n"
 
     if not ccy_models:
         ccy_text = ('⚠ Жодної валюти не вказано для відстежування, щоб налаштувати'
@@ -37,7 +37,7 @@ async def currency(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
     ccy_text += compose_currencies_msg(ccy_data, ccy_models)
 
-    await message.reply_markdown_v2(escape_md2(ccy_text, exclude=['*', '_']))
+    await message.reply_markdown_v2(escape_md2(ccy_text, exclude=['*', '_', '`']))
 
 
 currency_command_handler = CommandHandler('currency', currency)
