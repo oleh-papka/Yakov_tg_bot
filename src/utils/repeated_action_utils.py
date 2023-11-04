@@ -12,7 +12,7 @@ from utils.db_utils import get_session
 def get_callback(callback_name: str) -> JobCallback[CCT]:
     if callback_name == 'weather':
         return weather_callback
-    elif callback_name == 'ru_loses':
+    elif callback_name == 'rus_loses':
         return rus_losses_callback
     elif callback_name == 'crypto':
         return crypto_callback
