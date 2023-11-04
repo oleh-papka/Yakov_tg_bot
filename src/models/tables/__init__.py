@@ -6,3 +6,4 @@ from .feedback import Feedback
 from .feedback_reply import FeedbackReply
 from .crypto_currency import CryptoCurrency
 from .crypto_currency_watchlist import CryptoCurrencyWatchlist
+from .repeated_action import RepeatedAction

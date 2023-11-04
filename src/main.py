@@ -17,19 +17,26 @@ from commands import (help_command_handler,
                       weather_command_handler,
                       precheckout_handler,
                       successful_payment_handler,
-                      tip_developer_handler)
+                      tip_developer_handler,
+                      repeated_actions_handler)
 from config import Config
 from handlers import (error_handler,
                       unknown_messages,
                       days_passed_handler,
                       currency_convertor_handler)
 from utils.db_utils import check_db
+from utils.repeated_action_utils import register_actions_callback
 
 logger = logging.getLogger(__name__)
 
 
 def main() -> None:
-    application = Application.builder().token(Config.BOT_TOKEN).build()
+    application = (
+        Application.builder()
+        .token(Config.BOT_TOKEN)
+        .defaults(Config.BOT_DEFAULTS)
+        .build()
+    )
 
     # Check if DB exists DB
     if not check_db():
@@ -47,10 +54,14 @@ def main() -> None:
     application.add_handler(currency_command_handler)
     application.add_handler(feedback_handler)
     application.add_handler(feedback_reply_handler)
+    application.add_handler(repeated_actions_handler)
 
     # Register other handlers
     application.add_handler(days_passed_handler)
     application.add_handler(currency_convertor_handler)
+
+    # Add repeated actions
+    application.job_queue.run_once(register_actions_callback, when=1)
 
     # Test tip handlers
     application.add_handler(tip_developer_handler)

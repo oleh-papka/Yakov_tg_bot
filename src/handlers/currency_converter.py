@@ -28,9 +28,9 @@ async def currency_converter(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
         for market_type, price in usd_data.items():
             if len(price) == 2:
-                text += f"{Config.SPACING_SMALL}{market_type}: (_{price[1]:,.2f}₴_) -> *{amount / price[1]:,.2f}$*  \n"
+                text += f"{Config.SPACING}{market_type}: (_{price[1]:,.2f}₴_) -> *{amount / price[1]:,.2f}$*  \n"
             else:
-                nb_text = f"{Config.SPACING_SMALL}{market_type}: (_{price[0]:,.2f}₴_) -> *{amount / price[0]:,.2f}$*\n"
+                nb_text = f"{Config.SPACING}{market_type}: (_{price[0]:,.2f}₴_) -> *{amount / price[0]:,.2f}$*\n"
 
         text += f"\n{nb_text}"
 
@@ -40,9 +40,9 @@ async def currency_converter(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
         for market_type, price in usd_data.items():
             if len(price) == 2:
-                text += f"{Config.SPACING_SMALL}{market_type}: (_{price[0]:,.2f}₴_) -> *{amount * price[0]:,.2f}₴*\n"
+                text += f"{Config.SPACING}{market_type}: (_{price[0]:,.2f}₴_) -> *{amount * price[0]:,.2f}₴*\n"
             else:
-                nb_text = f"{Config.SPACING_SMALL}{market_type}: (_{price[0]:,.2f}₴_) -> *{amount * price[0]:,.2f}₴*\n"
+                nb_text = f"{Config.SPACING}{market_type}: (_{price[0]:,.2f}₴_) -> *{amount * price[0]:,.2f}₴*\n"
 
         text += f"\n{nb_text}"
 

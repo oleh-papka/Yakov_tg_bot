@@ -28,7 +28,7 @@ def compose_currencies_msg(ccy_data: dict, ccy_models: Result) -> str:
                 if market_type == 'Privat24':
                     msg += '\n'
             else:
-                nb_text = f"{Config.SPACING}{market_type}:  {price[0]:,.2f}\n"
+                nb_text = f"{Config.SPACING}{market_type}:  `₴ {price[0]:,.2f}`\n"
 
         msg += f"{nb_text}\n"
 
