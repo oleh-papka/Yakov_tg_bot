@@ -354,6 +354,12 @@ COPY public.city (id, owm_id, name, local_name, lat, lon, sinoptik_url, timezone
 --
 
 COPY public.crypto_currency (id, name, abbr) FROM stdin;
+1	Bitcoin	BTC
+1027	Ethereum	ETH
+1839	BNB	BNB
+5426	Solana	SOL
+52	XRP	XRP
+74	Dogecoin	DOGE
 \.
 
 
@@ -370,6 +376,10 @@ COPY public.crypto_currency_watchlist (user_id, crypto_currency_id) FROM stdin;
 --
 
 COPY public.currency (id, name, symbol) FROM stdin;
+1	usd	🇺🇸
+2	eur	🇪🇺
+3	pln	🇵🇱
+4	gbp	🇬🇧
 \.
 
 
@@ -431,7 +441,7 @@ SELECT pg_catalog.setval('public.crypto_currency_id_seq', 1, false);
 -- Name: currency_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.currency_id_seq', 1, false);
+SELECT pg_catalog.setval('public.currency_id_seq', 4, true);
 
 
 --
