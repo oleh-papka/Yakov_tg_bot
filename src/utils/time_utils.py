@@ -1,4 +1,4 @@
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone, timedelta, time
 
 
 class UserTime(datetime):
@@ -101,3 +101,15 @@ class UserTime(datetime):
         """Format timezone offset to sign-digit('+/d') format"""
         timezone_offset = int(int(timezone_offset) / 3600)
         return f'{timezone_offset:+d}'
+
+
+def parse_action_time(time_str: str) -> time | None:
+    time_formats = ['%H:%M', '%H %M', '%I:%M', '%I %M']
+
+    for time_format in time_formats:
+        try:
+            return datetime.strptime(time_str, time_format).time()
+        except ValueError:
+            pass
+
+    return

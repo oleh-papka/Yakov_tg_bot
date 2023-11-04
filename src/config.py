@@ -2,7 +2,9 @@ import logging
 import sys
 from warnings import filterwarnings
 
+import pytz
 from loguru import logger
+from telegram.ext import Defaults
 from telegram.warnings import PTBUserWarning
 
 from utils.env_utils import load_env_variable
@@ -30,6 +32,8 @@ class Config:
 
     DB_URL = load_env_variable('DB_URL')  # URL to your db
 
+    BOT_DEFAULTS = Defaults(tzinfo=pytz.timezone('Europe/Kyiv'))  # Update for your timezone
+
     ###########################################################################
     #               Heroku hosting only. Currently unsupported!               #
     ###########################################################################
@@ -45,7 +49,7 @@ class Config:
 
     SPACING = '⠀⠀⠀'  # Main whitespace characters used in formatting
 
-    BOT_VERSION = 'v0.2.0'
+    BOT_VERSION = 'v0.2.1'
 
     BOT_COMMANDS = [
         ('weather', 'Погода', False),
@@ -53,6 +57,7 @@ class Config:
         ('currency', 'Дані по валюті', False),
         ('ruloss', 'Втрати кацапні', False),
         ('feedback', 'Надіслати відгук', False),
+        ('rep_action', 'Повторювані події', False),
         ('settings', 'Налаштування', False),
         ('tip_developer', 'Тестові донейти', False),
         ('message_users', 'Повідомити користувачів', True),
