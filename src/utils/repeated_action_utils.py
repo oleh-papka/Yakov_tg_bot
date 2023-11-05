@@ -20,6 +20,17 @@ def get_callback(callback_name: str) -> JobCallback[CCT]:
         return currency_callback
 
 
+def get_action_name(action: str) -> str:
+    if action == 'weather':
+        return 'Погода 🌦️'
+    elif action == 'rus_loses':
+        return 'кацапи ☠️️'
+    elif action == 'crypto':
+        return 'Крипта 🪙'
+    elif action == 'curr':
+        return 'Валюти 🇺🇦'
+
+
 async def register_actions_callback(context: ContextTypes.DEFAULT_TYPE):
     async with get_session() as session:
         action_models = await get_actions(session)
