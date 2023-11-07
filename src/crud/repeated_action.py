@@ -1,4 +1,4 @@
-from datetime import time
+from datetime import time, timedelta, datetime
 
 from sqlalchemy import select, literal, delete, and_
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -17,18 +17,29 @@ async def get_actions(session: AsyncSession,
         query = select(RepeatedAction).where(RepeatedAction.id == literal(action_id))
     elif user_id:
         if execution_time and action:
+            today = datetime.now().date()
+            execution_datetime = datetime.combine(today, execution_time)
+
+            time_30_minutes_ago = execution_datetime - timedelta(minutes=30)
+            time_30_minutes_later = execution_datetime + timedelta(minutes=30)
+
             query = (
                 select(RepeatedAction)
                 .where(
                     and_(
                         RepeatedAction.user_id == literal(user_id),
                         RepeatedAction.action == literal(action),
-                        RepeatedAction.execution_time == literal(execution_time)
+                        RepeatedAction.execution_time >= time_30_minutes_ago.time(),
+                        RepeatedAction.execution_time <= time_30_minutes_later.time()
                     )
                 )
+                .order_by(RepeatedAction.execution_time, RepeatedAction.action)
             )
         else:
-            query = select(RepeatedAction).where(RepeatedAction.user_id == literal(user_id))
+            query = (
+                select(RepeatedAction)
+                .where(RepeatedAction.user_id == literal(user_id))
+            )
     else:
         query = select(RepeatedAction)
 
