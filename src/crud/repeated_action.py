@@ -52,7 +52,7 @@ async def get_actions(session: AsyncSession,
 async def create_action(session: AsyncSession,
                         user_id: int,
                         action: str,
-                        execution_time: time) -> None:
+                        execution_time: time) -> RepeatedAction:
     """Adds repeated_action"""
 
     repeated_action_model = RepeatedAction(user_id=user_id,
@@ -60,6 +60,9 @@ async def create_action(session: AsyncSession,
                                            execution_time=execution_time)
     session.add(repeated_action_model)
     await session.commit()
+    await session.refresh(repeated_action_model)
+
+    return repeated_action_model
 
 
 async def delete_action(session: AsyncSession,

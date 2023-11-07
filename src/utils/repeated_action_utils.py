@@ -36,4 +36,7 @@ async def register_actions_callback(context: ContextTypes.DEFAULT_TYPE):
         action_models = await get_actions(session)
 
     for action in action_models:
-        context.job_queue.run_once(get_callback(action.action), when=action.execution_time, chat_id=action.user_id)
+        context.job_queue.run_once(get_callback(action.action),
+                                   when=action.execution_time,
+                                   chat_id=action.user_id,
+                                   name=str(action.id))

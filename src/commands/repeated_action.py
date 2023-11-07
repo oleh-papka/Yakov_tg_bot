@@ -7,7 +7,7 @@ from telegram.ext import (filters,
                           ConversationHandler,
                           CommandHandler,
                           ContextTypes,
-                          CallbackQueryHandler)
+                          CallbackQueryHandler, Job)
 
 from config import Config
 from crud.repeated_action import create_action, get_actions, delete_action
@@ -223,6 +223,9 @@ async def delete_repeated_action(update: Update, context: ContextTypes.DEFAULT_T
 
     action_deleted_text = f'✅ Зроблено, дію *{get_action_name(action_model.action)}* з *id: {num_id}* видалено!'
 
+    job = context.job_queue.get_jobs_by_name(str(action_id))[0]
+    job.remove()
+
     await message.reply_text(text=escape_md2(action_deleted_text, ['*']), parse_mode=ParseMode.MARKDOWN_V2)
 
     context.user_data.clear()
@@ -283,9 +286,9 @@ async def set_action_time(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         return SET_ACTION
 
     async with get_session() as session:
-        await create_action(session, user_id=user.id, action=action, execution_time=execution_time)
+        action_model = await create_action(session, user_id=user.id, action=action, execution_time=execution_time)
 
-    context.job_queue.run_daily(get_callback(action), time=execution_time, chat_id=user.id)
+    context.job_queue.run_daily(get_callback(action), time=execution_time, chat_id=user.id, name=str(action_model.id))
 
     time_change_text = (f'✅ Зроблено, твоя дія *{get_action_name(action)}* буде повторюватись '
                         f'щодня о *{execution_time.strftime("%H:%M")}*')
