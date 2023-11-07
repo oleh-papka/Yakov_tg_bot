@@ -82,27 +82,42 @@ async def actions_preview(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 
     await query.answer()
 
-    actions_keyboard = InlineKeyboardMarkup([
-        [InlineKeyboardButton('Видалити дію 🗑️', callback_data='delete_action')],
-        [InlineKeyboardButton('🔙 Назад', callback_data='back')],
-        [InlineKeyboardButton('🚫 Відмінити', callback_data='cancel')]
-    ])
+    id_map = {'nums': [], 'ids': []}
 
     async with get_session() as session:
         action_models = await get_actions(session, user_id=user.id)
 
-    actions_list_text = '🆗 Ось список усіх твоїх повторюваних дій:\n\n'
+    if len(action_models) != 0:
+        action_btn = InlineKeyboardButton('Видалити дію 🗑️', callback_data='delete_action')
+        actions_list_text = '🆗 Ось список усіх твоїх повторюваних дій:\n\n'
 
-    for action in action_models:
-        actions_list_text += (f'{Config.SPACING}id: {action.id} *|* '
-                              f'{get_action_name(action.action)} *|* '
-                              f'{action.execution_time.strftime("%H:%M")}\n')
+        for num, action in enumerate(action_models, start=1):
+            actions_list_text += (f'{Config.SPACING}id: {num} *|* '
+                                  f'{get_action_name(action.action)} *|* '
+                                  f'{action.execution_time.strftime("%H:%M")}\n')
 
+            id_map['nums'].append(num)
+            id_map['ids'].append(action.id)
+
+        returning = LIST_ACTIONS
+    else:
+        action_btn = InlineKeyboardButton(f'Додати дію️ ⏲️', callback_data='add_action')
+        actions_list_text = ('🆗 Схоже у тебе немає жодної дії.\n\n'
+                             'Бажаєш додати дію?')
+        returning = ACTIONS_START
+
+    actions_keyboard = InlineKeyboardMarkup([
+        [action_btn],
+        [InlineKeyboardButton('🔙 Назад', callback_data='back')],
+        [InlineKeyboardButton('🚫 Відмінити', callback_data='cancel')]
+    ])
+
+    context.user_data['id_map'] = id_map
     context.user_data['markup_msg'] = await markup_msg.edit_text(escape_md2(actions_list_text, ['*', '`']),
                                                                  reply_markup=actions_keyboard,
                                                                  parse_mode=ParseMode.MARKDOWN_V2)
 
-    return LIST_ACTIONS
+    return returning
 
 
 @send_typing_action
@@ -114,11 +129,12 @@ async def delete_action_start(update: Update, context: ContextTypes.DEFAULT_TYPE
     await query.answer()
     await markup_msg.edit_reply_markup()
 
-    actions_delete_text = '🆗 Тоді, напиши *id* повторюваної дії, яку потрібно видалити:'
+    actions_delete_text = message.text
+    actions_delete_text += '\n\nТоді, напиши *id* повторюваної дії, яку потрібно видалити:'
 
-    context.user_data['markup_msg'] = await message.reply_text(escape_md2(actions_delete_text, ['*']),
-                                                               reply_markup=cancel_back_keyboard,
-                                                               parse_mode=ParseMode.MARKDOWN_V2)
+    context.user_data['markup_msg'] = await markup_msg.edit_text(escape_md2(actions_delete_text, ['*']),
+                                                                 reply_markup=cancel_back_keyboard,
+                                                                 parse_mode=ParseMode.MARKDOWN_V2)
 
     return DELETE_ACTION
 
@@ -126,8 +142,8 @@ async def delete_action_start(update: Update, context: ContextTypes.DEFAULT_TYPE
 @send_typing_action
 async def delete_repeated_action(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     message = update.message
-    user = update.effective_user
     markup_msg = context.user_data['markup_msg']
+    id_map = context.user_data['id_map']
 
     await markup_msg.edit_reply_markup(reply_markup=None)
     user_input = message.text.strip()
@@ -136,20 +152,30 @@ async def delete_repeated_action(update: Update, context: ContextTypes.DEFAULT_T
 
     if not match:
         delete_action_error_text = '⚠ Cхоже *id* повторюваної дії вказано не вірно, спробуй ще раз нижче:'
-        context.user_data['markup_msg'] = await message.reply_text(text=delete_action_error_text,
-                                                                   reply_markup=cancel_back_keyboard)
+        context.user_data['markup_msg'] = await message.reply_text(text=escape_md2(delete_action_error_text, ['*']),
+                                                                   reply_markup=cancel_back_keyboard,
+                                                                   parse_mode=ParseMode.MARKDOWN_V2)
         return DELETE_ACTION
     else:
-        action_id = int(user_input)
+        num_id = int(user_input)
+        delete_action_error_text = ('⚠ Cхоже повторюваної дії із вказаним *id* немає, '
+                                    'перевір *id* та спробуй ще раз нижче:')
+
+        if num_id not in id_map['nums']:
+            context.user_data['markup_msg'] = await message.reply_text(text=escape_md2(delete_action_error_text, ['*']),
+                                                                       reply_markup=cancel_back_keyboard,
+                                                                       parse_mode=ParseMode.MARKDOWN_V2)
+            return DELETE_ACTION
+        else:
+            action_id = id_map['ids'][id_map['nums'].index(num_id)]
 
         async with get_session() as session:
             action_models = await get_actions(session, action_id=action_id)
 
         if len(action_models) == 0:
-            delete_action_error_text = ('⚠ Cхоже повторюваної дії із вказаним *id* немає, '
-                                        'перевір *id* та спробуй ще раз нижче:')
-            context.user_data['markup_msg'] = await message.reply_text(text=delete_action_error_text,
-                                                                       reply_markup=cancel_back_keyboard)
+            context.user_data['markup_msg'] = await message.reply_text(text=escape_md2(delete_action_error_text, ['*']),
+                                                                       reply_markup=cancel_back_keyboard,
+                                                                       parse_mode=ParseMode.MARKDOWN_V2)
             return DELETE_ACTION
         else:
             action_model = action_models[0]
@@ -157,7 +183,7 @@ async def delete_repeated_action(update: Update, context: ContextTypes.DEFAULT_T
     async with get_session() as session:
         await delete_action(session, action_id=action_id)
 
-    action_deleted_text = f'✅ Зроблено, дію *{get_action_name(action_model.action)}* з *id: {action_id}* видалено!'
+    action_deleted_text = f'✅ Зроблено, дію *{get_action_name(action_model.action)}* з *id: {num_id}* видалено!'
 
     await message.reply_text(text=escape_md2(action_deleted_text, ['*']), parse_mode=ParseMode.MARKDOWN_V2)
 
