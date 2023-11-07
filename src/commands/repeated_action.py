@@ -47,22 +47,60 @@ async def repeated_actions_start(update: Update, context: ContextTypes.DEFAULT_T
 @send_typing_action
 async def add_repeated_action(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     query = update.callback_query
+    user = update.effective_user
     markup_msg = context.user_data['markup_msg']
 
     await query.answer()
 
-    actions_keyboard = InlineKeyboardMarkup([
-        [
-            InlineKeyboardButton(f'Погода 🌦️', callback_data='weather'),
-            InlineKeyboardButton(f'кацапи ☠️️', callback_data='rus_loses')
-        ],
-        [
-            InlineKeyboardButton(f'Крипта 🪙', callback_data='crypto'),
-            InlineKeyboardButton(f'Валюти 🇺🇦', callback_data='curr'),
-        ],
-        [InlineKeyboardButton('🔙 Назад', callback_data='back')],
-        [InlineKeyboardButton('🚫 Відмінити', callback_data='cancel')]
-    ])
+    async with get_session() as session:
+        action_models = await get_actions(session, user_id=user.id)
+
+    keyboard = []
+
+    weather_counter = 0
+    rus_loses_counter = 0
+    crypto_counter = 0
+    curr_counter = 0
+
+    for action_model in action_models:
+        if action_model.action == 'weather':
+            weather_counter += 1
+        elif action_model.action == 'rus_loses':
+            rus_loses_counter += 1
+        elif action_model.action == 'crypto':
+            crypto_counter += 1
+        elif action_model.action == 'curr':
+            curr_counter += 1
+
+    row11 = None if weather_counter else InlineKeyboardButton(f'Погода 🌦️', callback_data='weather')
+    row12 = None if rus_loses_counter else InlineKeyboardButton(f'кацапи ☠️️', callback_data='rus_loses')
+
+    row21 = InlineKeyboardButton(f'Крипта 🪙', callback_data='crypto') if crypto_counter <= 24 else None
+    row22 = InlineKeyboardButton(f'Валюти 🇺🇦', callback_data='curr') if rus_loses_counter <= 24 else None
+
+    if row11 or row12 or row21 or row22:
+        if row11 and row12:
+            keyboard.append([row11, row12])
+        elif row11:
+            keyboard.append([row11])
+        elif row12:
+            keyboard.append([row12])
+
+        if row21 and row22:
+            keyboard.append([row21, row22])
+        elif row21:
+            keyboard.append([row21])
+        elif row22:
+            keyboard.append([row22])
+
+        keyboard.extend([
+            [InlineKeyboardButton('🔙 Назад', callback_data='back')],
+            [InlineKeyboardButton('🚫 Відмінити', callback_data='cancel')]
+        ])
+
+        actions_keyboard = InlineKeyboardMarkup(keyboard)
+    else:
+        actions_keyboard = cancel_back_keyboard
 
     rep_actions_text = ('Повторювані дії чудовий спосіб налаштувати щоденне '
                         'відтворення певної команди в заданий час.\n\n'
