@@ -26,9 +26,14 @@ async def get_actions(session: AsyncSession,
                         RepeatedAction.execution_time == literal(execution_time)
                     )
                 )
+                .order_by(RepeatedAction.execution_time, RepeatedAction.action)
             )
         else:
-            query = select(RepeatedAction).where(RepeatedAction.user_id == literal(user_id))
+            query = (
+                select(RepeatedAction)
+                .where(RepeatedAction.user_id == literal(user_id))
+                .order_by(RepeatedAction.execution_time, RepeatedAction.action)
+            )
     else:
         query = select(RepeatedAction)
 
