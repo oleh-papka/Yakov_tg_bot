@@ -270,16 +270,17 @@ async def set_action_time(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 
     async with get_session() as session:
         action_models = await get_actions(session, user_id=user.id, action=action, execution_time=execution_time)
-        if len(action_models):
-            action_model = action_models[0]
-            set_time_error_text = (f'⚠ Дія (*{get_action_name(action_model.action)}*, '
-                                   f'*id: {action_model.id}*) уже існує із заданим часом відтворення.\n\n'
-                                   f'Тому я вважатиму що це помилка 😉. Спробуй ще раз з іншим часом:')
 
-            context.user_data['markup_msg'] = await message.reply_text(text=escape_md2(set_time_error_text, ['*']),
-                                                                       reply_markup=cancel_back_keyboard,
-                                                                       parse_mode=ParseMode.MARKDOWN_V2)
-            return SET_ACTION
+    if len(action_models):
+        action_model = action_models[0]
+        set_time_error_text = (f'⚠ Дія (*{get_action_name(action_model.action)}*, '
+                               f'*id: {action_model.id}*) уже існує із заданим часом відтворення.\n\n'
+                               f'Тому я вважатиму що це помилка 😉. Спробуй ще раз з іншим часом (зроби зазор у 30хв):')
+
+        context.user_data['markup_msg'] = await message.reply_text(text=escape_md2(set_time_error_text, ['*']),
+                                                                   reply_markup=cancel_back_keyboard,
+                                                                   parse_mode=ParseMode.MARKDOWN_V2)
+        return SET_ACTION
 
     async with get_session() as session:
         await create_action(session, user_id=user.id, action=action, execution_time=execution_time)
