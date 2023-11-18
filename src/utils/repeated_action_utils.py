@@ -37,6 +37,6 @@ async def register_actions_callback(context: ContextTypes.DEFAULT_TYPE):
 
     for action in action_models:
         context.job_queue.run_daily(get_callback(action.action),
-                                    when=action.execution_time,
+                                    time=action.execution_time,
                                     chat_id=action.user_id,
                                     name=str(action.id))

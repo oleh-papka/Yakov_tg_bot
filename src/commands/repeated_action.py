@@ -7,7 +7,7 @@ from telegram.ext import (filters,
                           ConversationHandler,
                           CommandHandler,
                           ContextTypes,
-                          CallbackQueryHandler, Job)
+                          CallbackQueryHandler)
 
 from config import Config
 from crud.repeated_action import create_action, get_actions, delete_action
@@ -126,7 +126,6 @@ async def actions_preview(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         action_models = await get_actions(session, user_id=user.id)
 
     if len(action_models) != 0:
-        action_btn = InlineKeyboardButton('Видалити дію 🗑️', callback_data='delete_action')
         actions_list_text = '🆗 Ось список усіх твоїх повторюваних дій:\n\n'
 
         for num, action in enumerate(action_models, start=1):
@@ -137,15 +136,19 @@ async def actions_preview(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
             id_map['nums'].append(num)
             id_map['ids'].append(action.id)
 
-        returning = LIST_ACTIONS
+        action_buttons = [
+            InlineKeyboardButton('Видалити дію 🗑️', callback_data='delete_action'),
+            InlineKeyboardButton(f'Додати дію️ ⏲️', callback_data='add_action')
+        ]
     else:
-        action_btn = InlineKeyboardButton(f'Додати дію️ ⏲️', callback_data='add_action')
         actions_list_text = ('🆗 Схоже у тебе немає жодної дії.\n\n'
                              'Бажаєш додати дію?')
-        returning = ACTIONS_START
+        action_buttons = [
+            InlineKeyboardButton(f'Додати дію️ ⏲️', callback_data='add_action')
+        ]
 
     actions_keyboard = InlineKeyboardMarkup([
-        [action_btn],
+        action_buttons,
         [InlineKeyboardButton('🔙 Назад', callback_data='back')],
         [InlineKeyboardButton('🚫 Відмінити', callback_data='cancel')]
     ])
@@ -155,7 +158,7 @@ async def actions_preview(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
                                                                  reply_markup=actions_keyboard,
                                                                  parse_mode=ParseMode.MARKDOWN_V2)
 
-    return returning
+    return LIST_ACTIONS
 
 
 @send_typing_action
@@ -221,16 +224,17 @@ async def delete_repeated_action(update: Update, context: ContextTypes.DEFAULT_T
     async with get_session() as session:
         await delete_action(session, action_id=action_id)
 
-    action_deleted_text = f'✅ Зроблено, дію *{get_action_name(action_model.action)}* з *id: {num_id}* видалено!'
+    action_deleted_text = (f'✅ Зроблено, дію *{get_action_name(action_model.action)}* з *id: {num_id}* видалено!'
+                           f'\n\nЩось ще?')
 
     job = context.job_queue.get_jobs_by_name(str(action_id))[0]
     job.remove()
 
-    await message.reply_text(text=escape_md2(action_deleted_text, ['*']), parse_mode=ParseMode.MARKDOWN_V2)
+    context.user_data['markup_msg'] = await message.reply_text(text=escape_md2(action_deleted_text, ['*']),
+                                                               parse_mode=ParseMode.MARKDOWN_V2,
+                                                               reply_markup=start_actions_keyboard)
 
-    context.user_data.clear()
-
-    return ConversationHandler.END
+    return ACTIONS_START
 
 
 @send_typing_action
@@ -276,9 +280,10 @@ async def set_action_time(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 
     if len(action_models):
         action_model = action_models[0]
-        set_time_error_text = (f'⚠ Дія (*{get_action_name(action_model.action)}*, '
-                               f'*id: {action_model.id}*) уже існує із заданим часом відтворення.\n\n'
-                               f'Тому я вважатиму що це помилка 😉. Спробуй ще раз з іншим часом (зроби зазор у 30хв):')
+        set_time_error_text = (f'⚠ Дія (*{get_action_name(action_model.action)}*) '
+                               f'уже існує із схожим часом відтворення.\n\n'
+                               f'Для того, щоб інші могли користуватись ботом є обмеження 😉. '
+                               f'Спробуй ще раз з іншим часом (дії одного типу можна надсилати 1 раз на 30хв):')
 
         context.user_data['markup_msg'] = await message.reply_text(text=escape_md2(set_time_error_text, ['*']),
                                                                    reply_markup=cancel_back_keyboard,
@@ -291,12 +296,13 @@ async def set_action_time(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     context.job_queue.run_daily(get_callback(action), time=execution_time, chat_id=user.id, name=str(action_model.id))
 
     time_change_text = (f'✅ Зроблено, твоя дія *{get_action_name(action)}* буде повторюватись '
-                        f'щодня о *{execution_time.strftime("%H:%M")}*')
-    await message.reply_markdown_v2(text=escape_md2(time_change_text, ['*']))
+                        f'щодня о *{execution_time.strftime("%H:%M")}*\n\n'
+                        f'Щось ще?')
 
-    context.user_data.clear()
+    context.user_data['markup_msg'] = await message.reply_markdown_v2(text=escape_md2(time_change_text, ['*']),
+                                                                      reply_markup=start_actions_keyboard)
 
-    return ConversationHandler.END
+    return ACTIONS_START
 
 
 async def back_to_actions_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -331,6 +337,7 @@ repeated_actions_handler = ConversationHandler(
         LIST_ACTIONS: [
             CallbackQueryHandler(cancel, pattern='^cancel$'),
             CallbackQueryHandler(back_to_actions_start, pattern='^back$'),
+            CallbackQueryHandler(add_repeated_action, pattern=r'^add_action$'),
             CallbackQueryHandler(delete_action_start, pattern='^delete_action$')
         ],
         DELETE_ACTION: [
