@@ -7,12 +7,11 @@ from telegram.constants import ParseMode
 from telegram.ext import ContextTypes
 
 from config import Config
-from utils.message_utils import send_typing_action, escape_md2
+from utils.message_utils import escape_md2
 
 logger = logging.getLogger(__name__)
 
 
-@send_typing_action
 async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
     err_msg_len = 1000 - 4  # Because "...\n" used
 
@@ -54,4 +53,5 @@ async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> N
     # Inform user
     error_text = 'Перепрошую, щось пішло не так. Я уже повідомив розробника.\n\nПідказка - /help'
 
-    await update.effective_message.reply_text(text=error_text, reply_to_message_id=update.effective_message)
+    if update:
+        await update.effective_message.reply_text(text=error_text, reply_to_message_id=update.effective_message)
