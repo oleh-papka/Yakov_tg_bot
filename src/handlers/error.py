@@ -5,9 +5,11 @@ import traceback
 from telegram import Update
 from telegram.constants import ParseMode
 from telegram.ext import ContextTypes
+from telegram.error import NetworkError
 
 from config import Config
 from utils.message_utils import escape_md2
+import httpx
 
 logger = logging.getLogger(__name__)
 
@@ -16,6 +18,10 @@ async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> N
     err_msg_len = 1000 - 4  # Because "...\n" used
 
     logger.error(msg="Exception while handling an update:", exc_info=context.error)
+
+    if isinstance(context.error, NetworkError) and isinstance(context.error.__cause__, httpx.ReadError):
+        logger.error("NetworkError due to httpx.ReadError encountered.", exc_info=context.error)
+        return
 
     tb_list = traceback.format_exception(None, context.error, context.error.__traceback__)
     tb_string = "".join(tb_list)
@@ -46,9 +52,18 @@ async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> N
         f"```"
     )
 
-    await context.bot.send_message(chat_id=Config.OWNER_ID, text=msg, parse_mode=ParseMode.MARKDOWN_V2)
-    await context.bot.send_message(chat_id=Config.OWNER_ID, text=msg2, parse_mode=ParseMode.MARKDOWN_V2)
-    await context.bot.send_message(chat_id=Config.OWNER_ID, text=msg3, parse_mode=ParseMode.MARKDOWN_V2)
+    await context.bot.send_message(chat_id=Config.OWNER_ID,
+                                   text=msg,
+                                   parse_mode=ParseMode.MARKDOWN_V2,
+                                   disable_notification=True)
+    await context.bot.send_message(chat_id=Config.OWNER_ID,
+                                   text=msg2,
+                                   parse_mode=ParseMode.MARKDOWN_V2,
+                                   disable_notification=True)
+    await context.bot.send_message(chat_id=Config.OWNER_ID,
+                                   text=msg3,
+                                   parse_mode=ParseMode.MARKDOWN_V2,
+                                   disable_notification=True)
 
     # Inform user
     error_text = 'Перепрошую, щось пішло не так. Я уже повідомив розробника.\n\nПідказка - /help'
