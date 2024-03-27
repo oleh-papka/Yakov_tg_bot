@@ -1,8 +1,6 @@
 # Yakov_tg_bot
 
-This is a simple Telegram helper bot designed to simplify daily routines.
-Initially, it was a personal project that grew into one of my largest pet projects,
-which I enjoy maintaining and supporting.
+This Telegram helper bot is designed to simplify daily routines, it implements basic functionality of Telegram Bot API.
 
 ### Features:
 - Weather forecast for users city
