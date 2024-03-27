@@ -18,10 +18,6 @@ This is a simple Telegram helper bot designed to simplify daily routines.
 Initially, it was a personal project that grew into one of my largest pet projects,
 which I enjoy maintaining and supporting.
 
-P.S. New features will be added soon...
-
-P.P.S. You can try it [here](https://t.me/Yakov_the_bot).
-
 ### Features:
 - Weather forecast for users city
 - Crypto and fiat currency markets changes
